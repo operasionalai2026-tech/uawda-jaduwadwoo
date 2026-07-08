@@ -39,12 +39,24 @@ export default async function AppLayout({
           >
             KPI
           </Link>
-          <span className="rounded-md px-2 py-1.5 text-neutral-400">
-            Evaluasi (Fase 2)
-          </span>
-          <span className="rounded-md px-2 py-1.5 text-neutral-400">
-            Forum &amp; Meeting (Fase 3)
-          </span>
+          <Link
+            href="/evaluasi"
+            className="rounded-md px-2 py-1.5 hover:bg-neutral-200"
+          >
+            Evaluasi
+          </Link>
+          <Link
+            href="/forum"
+            className="rounded-md px-2 py-1.5 hover:bg-neutral-200"
+          >
+            Forum
+          </Link>
+          <Link
+            href="/meeting"
+            className="rounded-md px-2 py-1.5 hover:bg-neutral-200"
+          >
+            Meeting
+          </Link>
         </nav>
         <form action="/auth/signout" method="post" className="mt-6">
           <button
