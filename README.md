@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistem Internal Operasional
 
-## Getting Started
+Next.js (App Router) + Supabase. Fase 1: fondasi (auth, roles, divisi, profil) + modul KPI.
 
-First, run the development server:
+## Status
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- ✅ Auth (email/password + magic link), proxy (auth gate) di `proxy.ts`
+- ✅ Skema `divisions`, `profiles`, `user_roles` + RLS (`supabase/migrations/0001_foundation.sql`)
+- ✅ Skema KPI + RLS (`supabase/migrations/0002_kpi.sql`)
+- ✅ Seed 10 divisi (`supabase/seed.sql`) — **lihat catatan di file itu, ada 2 nama divisi yang belum dikonfirmasi ke pemilik bisnis**
+- ✅ Modul KPI: CRUD metric, input entries, skor komposit per divisi
+- ⏳ Belum: modul Evaluasi (Fase 2), Forum & Meeting (Fase 3), rekaman + transkripsi AI (Fase 4), dashboard Command Center penuh
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Buat project di [supabase.com](https://supabase.com) (atau pakai project yang sudah ada).
+2. Copy `.env.local.example` ke `.env.local`, isi `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` dari dashboard Supabase (Project Settings → API).
+3. Link & push migrasi:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <project-ref>
+   npx supabase db push
+   ```
 
-## Learn More
+   > Catatan: Docker tidak tersedia di environment ini, jadi `supabase start` (stack lokal) tidak dipakai — migrasi langsung ditarget ke project cloud via `db push`.
 
-To learn more about Next.js, take a look at the following resources:
+4. Jalankan seed (setelah konfirmasi nama divisi di `supabase/seed.sql`):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   npx supabase db execute -f supabase/seed.sql
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. Buat user pertama (superadmin) lewat Supabase Auth dashboard, lalu insert manual ke `user_roles`:
 
-## Deploy on Vercel
+   ```sql
+   insert into user_roles (user_id, role) values ('<uid-user>', 'superadmin');
+   insert into profiles (id, full_name) values ('<uid-user>', 'Nama Owner');
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+6. Install & jalankan dev server:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+## Struktur
+
+- `proxy.ts` — auth gate (Next.js 16 renamed `middleware.ts` → `proxy.ts`; lihat `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`)
+- `src/lib/supabase/` — client browser/server/proxy helper
+- `src/lib/auth.ts` — `getCurrentUser()`, baca role dari `user_roles`
+- `src/app/(app)/` — halaman yang butuh login (layout dengan nav + role)
+- `src/app/(app)/kpi/` — modul KPI
+- `supabase/migrations/` — skema SQL, urut sesuai nomor file
+- `supabase/seed.sql` — seed 10 divisi
