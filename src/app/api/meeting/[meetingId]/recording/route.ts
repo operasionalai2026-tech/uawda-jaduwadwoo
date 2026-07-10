@@ -209,7 +209,91 @@ async function runBackgroundPipeline(meetingId: string, totalChunks: number) {
     const meetingTitle = meeting?.title || "Rapat Operasional";
     const meetingAgenda = meeting?.agenda || "Koordinasi rutin divisi.";
 
-    if (hasOpenAI && hasAnthropic) {
+    const hasGemini = !!process.env.GEMINI_API_KEY;
+
+    if (hasGemini) {
+      // --- GOOGLE GEMINI 1.5 FLASH FREE PIPELINE ---
+      const base64Audio = finalBuffer.toString("base64");
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+      // Update status to 'summarizing'
+      await supabase
+        .from("meeting_recordings")
+        .update({ status: "summarizing" })
+        .eq("meeting_id", meetingId);
+
+      const response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  inline_data: {
+                    mime_type: "audio/webm",
+                    data: base64Audio
+                  }
+                },
+                {
+                  text: `Rapat ini berjudul: "${meetingTitle}" dengan agenda: "${meetingAgenda}".
+                  
+Tolong transkripsikan audio rekaman rapat ini secara lengkap ke dalam Bahasa Indonesia, kemudian buat notulensi ringkasnya.
+
+Format keluaran Anda harus berupa JSON valid dengan struktur berikut:
+{
+  "transcript": "isi transkrip teks lengkap rapat secara detail",
+  "notulen": "isi notulen ringkasan rapat berformat Markdown",
+  "decisions": ["keputusan penting 1", "keputusan penting 2"],
+  "action_items": [
+    {
+      "title": "judul tugas tindak lanjut",
+      "assignee_name": "nama penanggung jawab jika disebutkan, atau kosongkan",
+      "due_date": "YYYY-MM-DD"
+    }
+  ]
+}
+
+Pastikan respons Anda HANYA berupa JSON valid tersebut tanpa teks pembuka atau penutup.`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseMimeType: "application/json"
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Gemini API gagal: ${errText}`);
+      }
+
+      const resJson = await response.json();
+      const textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textResponse) {
+        throw new Error("Gemini API tidak mengembalikan text.");
+      }
+
+      const parsedResults = JSON.parse(textResponse);
+      transcriptText = parsedResults.transcript || "";
+      aiResults = {
+        notulen: parsedResults.notulen || "",
+        decisions: parsedResults.decisions || [],
+        action_items: parsedResults.action_items || []
+      };
+
+      // Save transcript
+      await supabase.from("transcripts").upsert({
+        recording_id: recordingId,
+        raw_text: transcriptText,
+        provider: "gemini-1.5-flash",
+      }, { onConflict: "recording_id" });
+
+    } else if (hasOpenAI && hasAnthropic) {
       // --- REAL INTEGRATION ---
       // 1. Whisper transcription
       const whisperFormData = new FormData();
