@@ -5,6 +5,9 @@ import { NotulenForm } from "./NotulenForm";
 import { DecisionForm } from "./DecisionForm";
 import { ActionItemForm } from "./ActionItemForm";
 import { ActionItemStatusSelect } from "./ActionItemStatusSelect";
+import { AudioRecorder } from "./AudioRecorder";
+import { Sparkles, Calendar, MapPin, Users, CheckSquare, FileText } from "lucide-react";
+import Link from "next/link";
 
 export default async function MeetingDetailPage({
   params,
@@ -25,9 +28,9 @@ export default async function MeetingDetailPage({
   ] = await Promise.all([
     supabase.from("meetings").select("*").eq("id", meetingId).single(),
     supabase.from("meeting_attendees").select("user_id, rsvp_status, attended").eq("meeting_id", meetingId),
-    supabase.from("notulen").select("content").eq("meeting_id", meetingId).maybeSingle(),
-    supabase.from("decisions").select("id, content, created_at").eq("meeting_id", meetingId).order("created_at"),
-    supabase.from("action_items").select("id, title, assignee_id, due_date, status").eq("meeting_id", meetingId).order("created_at"),
+    supabase.from("notulen").select("content, source").eq("meeting_id", meetingId).maybeSingle(),
+    supabase.from("decisions").select("id, content, source, created_at").eq("meeting_id", meetingId).order("created_at"),
+    supabase.from("action_items").select("id, title, assignee_id, due_date, status, source").eq("meeting_id", meetingId).order("created_at"),
     supabase.from("profiles").select("id, full_name"),
   ]);
 
@@ -39,31 +42,96 @@ export default async function MeetingDetailPage({
   const rsvpYes = rsvp.bind(null, meetingId, "yes");
   const rsvpNo = rsvp.bind(null, meetingId, "no");
 
+  const getSourceBadge = (source: string | null | undefined) => {
+    if (source === "ai_generated") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded bg-purple-50 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 border border-purple-100">
+          <Sparkles className="h-2.5 w-2.5" />
+          <span>AI</span>
+        </span>
+      );
+    }
+    if (source === "ai_edited") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 border border-blue-100">
+          <span>AI + Edit</span>
+        </span>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-3xl space-y-8 pb-12">
+      {/* Back to list */}
       <div>
-        <h1 className="text-xl font-semibold">{meeting?.title}</h1>
-        <p className="text-sm text-neutral-500">
-          {meeting && new Date(meeting.scheduled_at).toLocaleString("id-ID")}
-          {meeting?.location ? ` · ${meeting.location}` : ""}
-        </p>
+        <Link
+          href="/meeting"
+          className="text-xs font-semibold text-blue-600 hover:underline"
+        >
+          &larr; Kembali ke daftar rapat
+        </Link>
+      </div>
+
+      {/* Title block */}
+      <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-4">
+        <div>
+          <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+            Rapat Divisi
+          </span>
+          <h1 className="mt-2 text-2xl font-extrabold text-slate-900 leading-tight">
+            {meeting?.title}
+          </h1>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-slate-400" />
+            <span>{meeting && new Date(meeting.scheduled_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</span>
+          </div>
+          {meeting?.location && (
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 text-slate-400" />
+              <span>{meeting.location}</span>
+            </div>
+          )}
+        </div>
+
         {meeting?.agenda && (
-          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">
-            {meeting.agenda}
-          </p>
+          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Agenda Rapat</p>
+            <p className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed">
+              {meeting.agenda}
+            </p>
+          </div>
         )}
       </div>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-neutral-500">Kehadiran Anda</h2>
-        <div className="flex items-center gap-2">
+      {/* AI Audio Recorder (Only for Leaders & Admins) */}
+      {canEditNotulen && (
+        <AudioRecorder meetingId={meetingId} />
+      )}
+
+      {/* Attendance */}
+      <section className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <Users className="h-4 w-4 text-slate-400" />
+            <span>Kehadiran Anda</span>
+          </h2>
+          <p className="text-xs font-semibold text-slate-500">
+            {(attendees ?? []).filter((a) => a.rsvp_status === "yes").length} hadir / {(attendees ?? []).length} diundang
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2 pt-1">
           <form action={rsvpYes}>
             <button
               type="submit"
-              className={`rounded-md border px-3 py-1.5 text-sm ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all duration-200 ${
                 myRsvp === "yes"
-                  ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                  : "border-neutral-300 hover:bg-neutral-100"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-500/5"
+                  : "border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
               }`}
             >
               Hadir
@@ -72,64 +140,87 @@ export default async function MeetingDetailPage({
           <form action={rsvpNo}>
             <button
               type="submit"
-              className={`rounded-md border px-3 py-1.5 text-sm ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all duration-200 ${
                 myRsvp === "no"
-                  ? "border-rose-600 bg-rose-50 text-rose-700"
-                  : "border-neutral-300 hover:bg-neutral-100"
+                  ? "border-rose-200 bg-rose-50 text-rose-700 shadow-sm shadow-rose-500/5"
+                  : "border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
               }`}
             >
               Tidak Hadir
             </button>
           </form>
         </div>
-        <p className="text-xs text-neutral-400">
-          {(attendees ?? []).filter((a) => a.rsvp_status === "yes").length} konfirmasi
-          hadir dari {(attendees ?? []).length} peserta tercatat.
-        </p>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-neutral-500">Notulen</h2>
+      {/* Notulen */}
+      <section className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-slate-400" />
+            <span>Notulen</span>
+          </h2>
+          {getSourceBadge(notulenRow?.source)}
+        </div>
+        
         {canEditNotulen ? (
           <NotulenForm meetingId={meetingId} initialContent={notulenRow?.content ?? ""} />
         ) : (
-          <p className="whitespace-pre-wrap rounded-md border border-neutral-200 p-3 text-sm">
-            {notulenRow?.content || "Belum ada notulen."}
-          </p>
+          <div className="prose prose-sm max-w-none rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
+            {notulenRow?.content || <span className="text-slate-400 italic">Belum ada notulen rapat.</span>}
+          </div>
         )}
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-neutral-500">Keputusan</h2>
-        <ul className="space-y-1.5">
+      {/* Decisions */}
+      <section className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <CheckSquare className="h-4 w-4 text-slate-400" />
+          <span>Keputusan</span>
+        </h2>
+        
+        <ul className="space-y-2">
           {(decisions ?? []).map((d) => (
             <li
               key={d.id}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-white p-3 text-sm text-slate-700 shadow-sm"
             >
-              {d.content}
+              <div className="flex items-start gap-2.5">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                <span className="leading-relaxed">{d.content}</span>
+              </div>
+              {getSourceBadge(d.source)}
             </li>
           ))}
           {(decisions ?? []).length === 0 && (
-            <p className="text-sm text-neutral-400">Belum ada keputusan tercatat.</p>
+            <p className="text-sm text-slate-400 italic">Belum ada keputusan tercatat.</p>
           )}
         </ul>
         {canEditNotulen && <DecisionForm meetingId={meetingId} />}
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-neutral-500">Action Items</h2>
-        <ul className="space-y-1.5">
+      {/* Action Items */}
+      <section className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <CheckSquare className="h-4 w-4 text-slate-400" />
+          <span>Action Items</span>
+        </h2>
+        
+        <ul className="space-y-2">
           {(actionItems ?? []).map((item) => (
             <li
               key={item.id}
-              className="flex items-center justify-between rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm"
             >
-              <div>
-                <p className="font-medium">{item.title}</p>
-                <p className="text-xs text-neutral-500">
-                  {item.assignee_id ? nameById.get(item.assignee_id) ?? "-" : "Belum ditugaskan"}
-                  {item.due_date ? ` · due ${item.due_date}` : ""}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-slate-800 leading-tight">
+                    {item.title}
+                  </p>
+                  {getSourceBadge(item.source)}
+                </div>
+                <p className="text-xs text-slate-500">
+                  PIC: <span className="font-semibold text-slate-700">{item.assignee_id ? nameById.get(item.assignee_id) ?? "-" : "Belum ditugaskan"}</span>
+                  {item.due_date ? ` · Tenggat: ${new Date(item.due_date).toLocaleDateString("id-ID", { dateStyle: "medium" })}` : ""}
                 </p>
               </div>
               <ActionItemStatusSelect
@@ -140,7 +231,7 @@ export default async function MeetingDetailPage({
             </li>
           ))}
           {(actionItems ?? []).length === 0 && (
-            <p className="text-sm text-neutral-400">Belum ada action item.</p>
+            <p className="text-sm text-slate-400 italic">Belum ada action item.</p>
           )}
         </ul>
         {canEditNotulen && (

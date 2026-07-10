@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { NewThreadForm } from "./NewThreadForm";
 import { NewCategoryForm } from "./NewCategoryForm";
+import { MessageSquare, Plus, CheckCircle, ArrowRight, User2, Layers } from "lucide-react";
 
 export default async function ForumPage() {
   const supabase = await createClient();
@@ -27,39 +28,97 @@ export default async function ForumPage() {
   const canManageCategories = user?.role === "superadmin" || user?.role === "admin";
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Forum</h1>
+    <div className="space-y-8 pb-12">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          Forum Diskusi
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Wadah koordinasi async, pengumuman keputusan resmi, dan diskusi topik antar divisi.
+        </p>
+      </div>
 
-      {canManageCategories && <NewCategoryForm />}
+      {/* Admin Panel: Kelola Kategori */}
+      {canManageCategories && (
+        <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+            <Layers className="h-4.5 w-4.5 text-blue-600" />
+            <span>Tambah Kategori Diskusi</span>
+          </h2>
+          <NewCategoryForm />
+        </div>
+      )}
 
-      <NewThreadForm categories={categories ?? []} />
+      {/* Form: New Thread */}
+      <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm space-y-4">
+        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+          <MessageSquare className="h-4.5 w-4.5 text-rose-600" />
+          <span>Mulai Topik Diskusi Baru</span>
+        </h2>
+        <NewThreadForm categories={categories ?? []} />
+      </div>
 
-      <div className="space-y-2">
-        {(threads ?? []).map((thread) => (
-          <Link
-            key={thread.id}
-            href={`/forum/${thread.id}`}
-            className="flex items-center justify-between rounded-md border border-neutral-200 px-4 py-3 text-sm hover:bg-neutral-50"
-          >
-            <div>
-              <p className="font-medium">
-                {thread.title}
-                {thread.is_decision && (
-                  <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                    Keputusan
+      {/* Thread List */}
+      <div className="space-y-4">
+        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Topik Terbaru</h2>
+        
+        <div className="grid gap-3 max-w-3xl">
+          {(threads ?? []).map((thread) => {
+            const authorName = authorNameById.get(thread.created_by) ?? "—";
+            const categoryName = categoryNameById.get(thread.category_id) ?? "Umum";
+            return (
+              <Link
+                key={thread.id}
+                href={`/forum/${thread.id}`}
+                className="group flex items-center justify-between rounded-2xl bg-white p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 hover:scale-[1.005]"
+              >
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-rose-600 group-hover:text-white transition-all duration-300">
+                    <MessageSquare className="h-5 w-5" />
                   </span>
-                )}
-              </p>
-              <p className="text-xs text-neutral-500">
-                {categoryNameById.get(thread.category_id) ?? "-"} &middot;{" "}
-                {authorNameById.get(thread.created_by) ?? "-"}
-              </p>
+                  
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-slate-800 truncate max-w-[300px] group-hover:text-blue-600 transition-colors">
+                        {thread.title}
+                      </p>
+                      {thread.is_decision && (
+                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-100">
+                          <CheckCircle className="h-3 w-3" />
+                          <span>Keputusan Resmi</span>
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                      <span className="bg-slate-100 border border-slate-200 text-slate-600 font-semibold px-2 py-0.5 rounded text-[10px] uppercase">
+                        {categoryName}
+                      </span>
+                      <span>&bull;</span>
+                      <span className="flex items-center gap-1">
+                        <User2 className="h-3 w-3 text-slate-400" />
+                        <span>{authorName}</span>
+                      </span>
+                      <span>&bull;</span>
+                      <span>{new Date(thread.created_at).toLocaleDateString("id-ID", { dateStyle: "short" })}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-slate-400 group-hover:text-slate-800 transition-colors pl-4">
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            );
+          })}
+
+          {(threads ?? []).length === 0 && (
+            <div className="py-12 text-center border border-dashed border-slate-300 rounded-2xl bg-slate-50/50">
+              <p className="text-sm text-slate-400 italic">Belum ada topik diskusi dibuat.</p>
             </div>
-          </Link>
-        ))}
-        {(threads ?? []).length === 0 && (
-          <p className="text-sm text-neutral-400">Belum ada thread.</p>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

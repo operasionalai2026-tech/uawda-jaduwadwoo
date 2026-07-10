@@ -1,0 +1,197 @@
+"use client";
+
+import { useState } from "react";
+import { type AppRole } from "@/lib/auth";
+import { updateUserRoleAndProfile } from "./actions";
+import { Edit2, Check, X, ShieldAlert } from "lucide-react";
+
+interface UserRowProps {
+  user: {
+    id: string;
+    fullName: string;
+    divisionId: string | null;
+    position: string;
+    employmentStatus: string;
+    role: AppRole;
+  };
+  divisions: { id: string; name: string }[];
+  currentUserRole: AppRole;
+}
+
+export function UserRow({ user, divisions, currentUserRole }: UserRowProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [fullName, setFullName] = useState(user.fullName);
+  const [divisionId, setDivisionId] = useState(user.divisionId || "");
+  const [position, setPosition] = useState(user.position || "");
+  const [employmentStatus, setEmploymentStatus] = useState(user.employmentStatus || "active");
+  const [role, setRole] = useState(user.role);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
+    const res = await updateUserRoleAndProfile(user.id, {
+      fullName,
+      divisionId: divisionId || null,
+      position,
+      employmentStatus,
+      role,
+    });
+    setLoading(false);
+
+    if (res.success) {
+      setIsEditing(false);
+    } else {
+      setError(res.error);
+    }
+  };
+
+  const currentDivName = divisions.find((d) => d.id === user.divisionId)?.name ?? "—";
+  const displayRole = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+  if (isEditing) {
+    return (
+      <tr className="border-b border-slate-100 bg-slate-50/50">
+        <td className="p-4">
+          <input
+            type="text"
+            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Nama Lengkap"
+            disabled={loading}
+          />
+          {error && (
+            <p className="mt-1 text-[10px] text-rose-600 flex items-center gap-1 font-medium">
+              <ShieldAlert className="h-3 w-3 shrink-0" />
+              <span>{error}</span>
+            </p>
+          )}
+        </td>
+        <td className="p-4">
+          <input
+            type="text"
+            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+            placeholder="Jabatan (e.g. Packer)"
+            disabled={loading}
+          />
+        </td>
+        <td className="p-4">
+          <select
+            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+            value={divisionId}
+            onChange={(e) => setDivisionId(e.target.value)}
+            disabled={loading}
+          >
+            <option value="">Tanpa Divisi (—)</option>
+            {divisions.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </td>
+        <td className="p-4">
+          <select
+            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+            value={role}
+            onChange={(e) => setRole(e.target.value as AppRole)}
+            disabled={loading || (currentUserRole !== "superadmin" && role === "superadmin")}
+          >
+            <option value="staff">Staff</option>
+            <option value="leader">Leader</option>
+            <option value="admin">Admin</option>
+            {currentUserRole === "superadmin" && <option value="superadmin">Superadmin</option>}
+          </select>
+        </td>
+        <td className="p-4">
+          <select
+            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+            value={employmentStatus}
+            onChange={(e) => setEmploymentStatus(e.target.value)}
+            disabled={loading}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </td>
+        <td className="p-4 text-right">
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+              title="Simpan"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setError(null);
+                setFullName(user.fullName);
+                setDivisionId(user.divisionId || "");
+                setPosition(user.position || "");
+                setEmploymentStatus(user.employmentStatus || "active");
+                setRole(user.role);
+              }}
+              disabled={loading}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors"
+              title="Batal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  // Read-only Row
+  return (
+    <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+      <td className="p-4 font-semibold text-slate-800">{user.fullName || "—"}</td>
+      <td className="p-4 text-slate-600">{user.position || "—"}</td>
+      <td className="p-4 text-slate-600">{currentDivName}</td>
+      <td className="p-4">
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            user.role === "superadmin"
+              ? "bg-rose-100 text-rose-700"
+              : user.role === "admin"
+              ? "bg-blue-100 text-blue-700"
+              : user.role === "leader"
+              ? "bg-purple-100 text-purple-700"
+              : "bg-slate-100 text-slate-700"
+          }`}
+        >
+          {displayRole}
+        </span>
+      </td>
+      <td className="p-4">
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            user.employmentStatus === "active"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-rose-100 text-rose-700 border border-rose-200"
+          }`}
+        >
+          {user.employmentStatus === "active" ? "Aktif" : "Nonaktif"}
+        </span>
+      </td>
+      <td className="p-4 text-right">
+        <button
+          onClick={() => setIsEditing(true)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition-all hover:border-slate-300"
+          title="Edit Karyawan"
+          disabled={currentUserRole !== "superadmin" && user.role === "superadmin"}
+        >
+          <Edit2 className="h-3.5 w-3.5" />
+        </button>
+      </td>
+    </tr>
+  );
+}
