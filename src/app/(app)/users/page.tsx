@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { UserRow } from "./UserRow";
+import { CreateUserForm } from "./CreateUserForm";
 import { Users2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -72,6 +73,9 @@ export default async function UsersManagementPage() {
           <span>Total: {users.length} Karyawan</span>
         </div>
       </div>
+
+      {/* Create User Form Section */}
+      <CreateUserForm divisions={activeDivisions} currentUserRole={user.role} />
 
       {/* Main Table Card */}
       <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm">
