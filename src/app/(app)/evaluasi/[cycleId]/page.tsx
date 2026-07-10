@@ -75,7 +75,36 @@ export default async function CycleDetailPage({
     crossResults = data ?? [];
   }
 
-  const profileNameById = new Map(staff.map((s) => [s.id, s.full_name]));
+  // Load profiles for mapping names in Superadmin/Admin audit views
+  let allProfiles: { id: string; full_name: string }[] = [];
+  let rawIndividualEvaluations: any[] = [];
+  let rawCrossDivisionEvaluations: any[] = [];
+
+  if (user?.role === "superadmin" || user?.role === "admin") {
+    const { data } = await supabase.from("profiles").select("id, full_name");
+    allProfiles = data ?? [];
+  }
+
+  if (user?.role === "superadmin") {
+    const [indRes, crossRes] = await Promise.all([
+      supabase
+        .from("evaluations_individual")
+        .select("rater_id, ratee_id, criteria_id, score, comment, eval_criteria(name)")
+        .eq("cycle_id", cycleId),
+      supabase
+        .from("evaluations_cross_division")
+        .select("rater_user_id, rater_division_id, ratee_division_id, score, comment")
+        .eq("cycle_id", cycleId)
+    ]);
+    rawIndividualEvaluations = indRes.data ?? [];
+    rawCrossDivisionEvaluations = crossRes.data ?? [];
+  }
+
+  const profileNameById = new Map([
+    ...staff.map((s) => [s.id, s.full_name] as [string, string]),
+    ...allProfiles.map((p) => [p.id, p.full_name] as [string, string])
+  ]);
+  const divisionMap = new Map((divisions ?? []).map((d) => [d.id, d.name]));
 
   return (
     <div className="space-y-8 pb-12">
@@ -202,6 +231,103 @@ export default async function CycleDetailPage({
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+      )}
+
+      {/* Superadmin Audit Log Panel */}
+      {user?.role === "superadmin" && (
+        <section className="rounded-2xl bg-slate-900 text-white p-6 border border-slate-800 shadow-xl space-y-6">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <ShieldAlert className="h-5.5 w-5.5 text-rose-500" />
+            <div>
+              <h2 className="text-base font-bold text-slate-100">Panel Audit Superadmin (Log Penilaian Detil)</h2>
+              <p className="text-xs text-slate-400">Khusus Superadmin: Akses rincian data mentah evaluasi untuk melacak siapa menilai siapa.</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {/* 1. Detail Individu */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-300">Log Penilaian Individual (Leader ➔ Staff)</h3>
+              {rawIndividualEvaluations.length === 0 ? (
+                <p className="text-xs text-slate-500 italic">Belum ada penilaian individual diinput.</p>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+                  <table className="w-full text-xs text-left text-slate-300">
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <th className="p-3">Penilai (Leader)</th>
+                        <th className="p-3">Yang Dinilai (Staff)</th>
+                        <th className="p-3">Kriteria</th>
+                        <th className="p-3 text-center">Skor</th>
+                        <th className="p-3">Komentar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rawIndividualEvaluations.map((e, idx) => (
+                        <tr key={idx} className="border-b border-slate-900 hover:bg-slate-900/50">
+                          <td className="p-3 font-semibold text-slate-200">
+                            {profileNameById.get(e.rater_id) ?? e.rater_id}
+                          </td>
+                          <td className="p-3 text-slate-300">
+                            {profileNameById.get(e.ratee_id) ?? e.ratee_id}
+                          </td>
+                          <td className="p-3 text-slate-400">
+                            {(e.eval_criteria as any)?.name ?? "Kriteria"}
+                          </td>
+                          <td className="p-3 text-center font-bold text-rose-400">{e.score}</td>
+                          <td className="p-3 text-slate-400 italic max-w-xs truncate" title={e.comment}>
+                            {e.comment || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Detail Lintas Divisi */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-300">Log Penilaian Lintas Divisi (Divisi ➔ Divisi)</h3>
+              {rawCrossDivisionEvaluations.length === 0 ? (
+                <p className="text-xs text-slate-500 italic">Belum ada penilaian lintas divisi diinput.</p>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+                  <table className="w-full text-xs text-left text-slate-300">
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <th className="p-3">Rater (User)</th>
+                        <th className="p-3">Divisi Penilai</th>
+                        <th className="p-3">Divisi Dinilai</th>
+                        <th className="p-3 text-center">Skor</th>
+                        <th className="p-3">Komentar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rawCrossDivisionEvaluations.map((e, idx) => (
+                        <tr key={idx} className="border-b border-slate-900 hover:bg-slate-900/50">
+                          <td className="p-3 font-semibold text-slate-200">
+                            {profileNameById.get(e.rater_user_id) ?? e.rater_user_id}
+                          </td>
+                          <td className="p-3 text-slate-300">
+                            {divisionMap.get(e.rater_division_id) ?? e.rater_division_id}
+                          </td>
+                          <td className="p-3 text-slate-300">
+                            {divisionMap.get(e.ratee_division_id) ?? e.ratee_division_id}
+                          </td>
+                          <td className="p-3 text-center font-bold text-amber-400">{e.score}</td>
+                          <td className="p-3 text-slate-400 italic max-w-xs truncate" title={e.comment}>
+                            {e.comment || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </section>
       )}
