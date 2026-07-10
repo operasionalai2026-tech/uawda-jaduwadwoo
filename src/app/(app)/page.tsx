@@ -20,48 +20,71 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   const supabase = await createClient();
 
-  // Query all necessary data in parallel
+  // Step 1: Query base metadata (divisions, periods, metrics, profiles) in parallel
   const [
     { data: divisions },
     { data: periods },
     { data: metrics },
-    { data: entries },
-    { data: actionItems },
-    { data: meetings },
     { data: profiles },
-    { data: compositeScores },
   ] = await Promise.all([
     supabase.from("divisions").select("id, name, category"),
     supabase.from("kpi_periods").select("id, period_type, year, month, status").order("year", { ascending: false }).order("month", { ascending: false }),
     supabase.from("kpi_metrics").select("id, division_id, name, weight, target_value, unit, direction, active"),
-    supabase.from("kpi_entries").select("id, metric_id, period_id, actual_value, score, notes"),
-    supabase.from("action_items").select("id, title, assignee_id, due_date, status, meeting_id").order("due_date", { ascending: true }),
-    supabase.from("meetings").select("id, title, scheduled_at, location, status").order("scheduled_at", { ascending: true }),
     supabase.from("profiles").select("id, full_name"),
-    supabase.from("division_scores").select("division_id, period_id, composite_score"),
   ]);
 
   const activeDivisions = divisions ?? [];
   const activeMetrics = (metrics ?? []).filter((m) => m.active);
   const allPeriods = periods ?? [];
+  const latestMonthlyPeriod = allPeriods.find((p) => p.period_type === "monthly");
   const monthlyPeriods = allPeriods
     .filter((p) => p.period_type === "monthly")
     .slice(0, 6) // Take the last 6 months
     .reverse(); // Order from oldest to newest
 
-  const activeEntries = entries ?? [];
-  const allActionItems = actionItems ?? [];
-  const allMeetings = meetings ?? [];
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
 
   // Date constants
   const todayStr = new Date().toISOString().split("T")[0];
+  const nowStr = new Date().toISOString();
+
+  // Step 2: Query filtered transactional data in parallel using metadata for filters
+  const [
+    { data: entries },
+    { data: actionItems },
+    { data: meetings },
+    { data: compositeScores },
+  ] = await Promise.all([
+    // Only fetch entries for the latest monthly period
+    latestMonthlyPeriod
+      ? supabase.from("kpi_entries").select("id, metric_id, period_id, actual_value, score, notes").eq("period_id", latestMonthlyPeriod.id)
+      : Promise.resolve({ data: [] }),
+    // Only fetch overdue action items (not done, and due date has passed)
+    supabase.from("action_items")
+      .select("id, title, assignee_id, due_date, status, meeting_id")
+      .neq("status", "done")
+      .lt("due_date", todayStr)
+      .order("due_date", { ascending: true }),
+    // Only fetch upcoming meetings (scheduled or ongoing)
+    supabase.from("meetings")
+      .select("id, title, scheduled_at, location, status")
+      .in("status", ["scheduled", "ongoing"])
+      .gte("scheduled_at", nowStr)
+      .order("scheduled_at", { ascending: true }),
+    // Only fetch composite scores for the 6 periods we are displaying
+    monthlyPeriods.length > 0
+      ? supabase.from("division_scores").select("division_id, period_id, composite_score").in("period_id", monthlyPeriods.map((p) => p.id))
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const activeEntries = entries ?? [];
+  const allActionItems = actionItems ?? [];
+  const allMeetings = meetings ?? [];
 
   // 1. Quick Stats Calculations
   const totalDivisions = activeDivisions.length;
   
   // Rata-rata KPI Global (latest period composite score average)
-  const latestMonthlyPeriod = allPeriods.find((p) => p.period_type === "monthly");
   const latestPeriodScores = latestMonthlyPeriod
     ? (compositeScores ?? []).filter((s) => s.period_id === latestMonthlyPeriod.id)
     : [];
