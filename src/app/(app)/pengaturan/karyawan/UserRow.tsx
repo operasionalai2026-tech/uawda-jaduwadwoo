@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type AppRole, ROLE_LABEL } from "@/lib/auth";
+import { type AppRole, ROLE_LABEL } from "@/lib/roles";
 import { updateUserRoleAndProfile } from "./actions";
 import { Edit2, Check, X, ShieldAlert } from "lucide-react";
 

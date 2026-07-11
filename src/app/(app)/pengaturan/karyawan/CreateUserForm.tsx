@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type AppRole } from "@/lib/auth";
+import { type AppRole } from "@/lib/roles";
 import { registerNewUser } from "./actions";
 import { UserPlus, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 

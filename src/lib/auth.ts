@@ -1,16 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { type AppRole, ROLE_LABEL } from "@/lib/roles";
 
-export type AppRole = "superadmin" | "admin" | "leader" | "staff";
-
-// Display labels only -- the stored role values (superadmin/admin/leader/
-// staff) are unchanged; this just renames them in the UI to match the
-// Owner -> Management -> Leader Divisi -> Staff org structure.
-export const ROLE_LABEL: Record<AppRole, string> = {
-  superadmin: "Owner",
-  admin: "Management",
-  leader: "Leader Divisi",
-  staff: "Staff",
-};
+// Re-exported for existing server-side importers -- client components
+// should import these directly from "@/lib/roles" instead, since this file
+// pulls in next/headers via lib/supabase/server and can't be bundled client-side.
+export type { AppRole };
+export { ROLE_LABEL };
 
 export type CurrentUser = {
   id: string;
