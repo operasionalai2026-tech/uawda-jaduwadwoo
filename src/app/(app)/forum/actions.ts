@@ -36,14 +36,27 @@ export async function createThread(
   const categoryId = String(formData.get("category_id"));
   const title = String(formData.get("title"));
   const content = String(formData.get("content") ?? "");
+  const visibility = String(formData.get("visibility") ?? "public") === "private" ? "private" : "public";
+  const divisionIds = formData.getAll("division_ids").map(String).filter(Boolean);
+
+  if (visibility === "private" && divisionIds.length === 0) {
+    return { error: "Pilih minimal satu divisi untuk thread privat." };
+  }
 
   const { data: thread, error } = await supabase
     .from("forum_threads")
-    .insert({ category_id: categoryId, title, created_by: user.id })
+    .insert({ category_id: categoryId, title, created_by: user.id, visibility })
     .select("id")
     .single();
 
   if (error) return { error: error.message };
+
+  if (visibility === "private") {
+    const { error: divisionError } = await supabase
+      .from("forum_thread_divisions")
+      .insert(divisionIds.map((division_id) => ({ thread_id: thread.id, division_id })));
+    if (divisionError) return { error: divisionError.message };
+  }
 
   if (content.trim()) {
     await supabase

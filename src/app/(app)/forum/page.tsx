@@ -3,20 +3,26 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { NewThreadForm } from "./NewThreadForm";
 import { NewCategoryForm } from "./NewCategoryForm";
-import { MessageSquare, Plus, CheckCircle, ArrowRight, User2, Layers } from "lucide-react";
+import { MessageSquare, Plus, CheckCircle, ArrowRight, User2, Layers, Lock } from "lucide-react";
 
 export default async function ForumPage() {
   const supabase = await createClient();
   const user = await getCurrentUser();
 
-  const [{ data: categories }, { data: threads }] = await Promise.all([
+  const [{ data: categories }, { data: threads }, { data: divisions }] = await Promise.all([
     supabase.from("forum_categories").select("id, name, division_id").order("name"),
+    // RLS sudah menyaring: thread privat hanya muncul kalau divisi user
+    // di-include, dibuat sendiri, atau user Owner.
     supabase
       .from("forum_threads")
-      .select("id, title, category_id, created_by, is_decision, created_at")
+      .select("id, title, category_id, created_by, is_decision, visibility, created_at")
       .order("created_at", { ascending: false })
       .limit(50),
+    supabase.from("divisions").select("id, name").order("name"),
   ]);
+
+  const canCreatePrivate =
+    user?.role === "leader" || user?.role === "admin" || user?.role === "superadmin";
 
   const authorIds = [...new Set((threads ?? []).map((t) => t.created_by).filter(Boolean))];
   const { data: authors } = authorIds.length
@@ -56,7 +62,11 @@ export default async function ForumPage() {
           <MessageSquare className="h-4.5 w-4.5 text-rose-600" />
           <span>Mulai Topik Diskusi Baru</span>
         </h2>
-        <NewThreadForm categories={categories ?? []} />
+        <NewThreadForm
+          categories={categories ?? []}
+          divisions={divisions ?? []}
+          canCreatePrivate={canCreatePrivate}
+        />
       </div>
 
       {/* Thread List */}
@@ -87,6 +97,12 @@ export default async function ForumPage() {
                         <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-100">
                           <CheckCircle className="h-3 w-3" />
                           <span>Keputusan Resmi</span>
+                        </span>
+                      )}
+                      {thread.visibility === "private" && (
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-100">
+                          <Lock className="h-3 w-3" />
+                          <span>Privat</span>
                         </span>
                       )}
                     </div>

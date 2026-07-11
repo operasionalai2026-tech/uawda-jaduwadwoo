@@ -13,7 +13,10 @@ export default async function EvaluasiIndexPage() {
     .select("id, name, start_date, end_date, status")
     .order("created_at", { ascending: false });
 
-  const canManage = user?.role === "superadmin" || user?.role === "admin";
+  // Membuka/menutup cycle evaluasi adalah aksi governance lintas-perusahaan,
+  // dikunci ke Owner saja (Management tetap bisa mengelola data operasional
+  // di dalam cycle yang sudah dibuka).
+  const canManage = user?.role === "superadmin";
 
   return (
     <div className="space-y-8">

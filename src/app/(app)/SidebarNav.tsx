@@ -8,7 +8,8 @@ import {
   ClipboardList,
   MessageSquare,
   CalendarDays,
-  Users2,
+  Settings,
+  Target,
 } from "lucide-react";
 
 interface SidebarNavProps {
@@ -22,12 +23,13 @@ export function SidebarNav({ isAdminOrSuperadmin }: SidebarNavProps) {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/kpi", label: "KPI Divisi", icon: BarChart3 },
     { href: "/evaluasi", label: "Evaluasi", icon: ClipboardList },
+    { href: "/tugas", label: "Tugas & Poin", icon: Target },
     { href: "/forum", label: "Forum Diskusi", icon: MessageSquare },
     { href: "/meeting", label: "Rapat & Notulen", icon: CalendarDays },
   ];
 
   if (isAdminOrSuperadmin) {
-    links.push({ href: "/users", label: "Manajemen Karyawan", icon: Users2 });
+    links.push({ href: "/pengaturan", label: "Pengaturan", icon: Settings });
   }
 
   return (

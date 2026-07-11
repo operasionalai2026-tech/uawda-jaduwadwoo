@@ -29,12 +29,17 @@ export async function updateUserRoleAndProfile(
 
     // Role protection logic
     if (currentUser.role !== "superadmin" && currentUser.role !== "admin") {
-      return { success: false, error: "Unauthorized. Hanya Admin atau Superadmin yang dapat melakukan ini." };
+      return { success: false, error: "Unauthorized. Hanya Management atau Owner yang dapat melakukan ini." };
     }
 
-    // Admin cannot promote anyone to superadmin
+    // Management cannot promote anyone to Owner
     if (data.role === "superadmin" && currentUser.role !== "superadmin") {
-      return { success: false, error: "Hanya Superadmin yang dapat memberikan akses Superadmin." };
+      return { success: false, error: "Hanya Owner yang dapat memberikan akses Owner." };
+    }
+
+    // Management cannot promote anyone to Management -- only Owner mints peers/superiors
+    if (data.role === "admin" && currentUser.role !== "superadmin") {
+      return { success: false, error: "Hanya Owner yang dapat memberikan akses Management." };
     }
 
     // Fetch the target user's current role
@@ -44,9 +49,14 @@ export async function updateUserRoleAndProfile(
       .eq("user_id", userId)
       .maybeSingle();
 
-    // Prevent Admin from modifying a Superadmin's role or profile
+    // Prevent Management from modifying an Owner's role or profile
     if (targetRoleRow?.role === "superadmin" && currentUser.role !== "superadmin") {
-      return { success: false, error: "Admin tidak dapat mengubah profil atau hak akses Superadmin." };
+      return { success: false, error: "Management tidak dapat mengubah profil atau hak akses Owner." };
+    }
+
+    // Prevent Management from modifying a peer Management account
+    if (targetRoleRow?.role === "admin" && currentUser.role !== "superadmin") {
+      return { success: false, error: "Management tidak dapat mengubah profil atau hak akses sesama Management." };
     }
 
     // 1. Update profiles table
@@ -88,11 +98,12 @@ export async function updateUserRoleAndProfile(
       return { success: false, error: `Tambah role error: ${insertRoleError.message}` };
     }
 
-    revalidatePath("/users");
+    revalidatePath("/pengaturan/karyawan");
     revalidatePath("/");
     return { success: true, error: null };
-  } catch (error: any) {
-    return { success: false, error: error?.message || "Terjadi kesalahan internal" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal";
+    return { success: false, error: message };
   }
 }
 
@@ -112,12 +123,17 @@ export async function registerNewUser(data: {
 
     // Role protection logic
     if (currentUser.role !== "superadmin" && currentUser.role !== "admin") {
-      return { success: false, error: "Unauthorized. Hanya Admin atau Superadmin yang dapat mendaftarkan karyawan baru." };
+      return { success: false, error: "Unauthorized. Hanya Management atau Owner yang dapat mendaftarkan karyawan baru." };
     }
 
-    // Admin cannot create superadmin accounts
+    // Management cannot create Owner accounts
     if (data.role === "superadmin" && currentUser.role !== "superadmin") {
-      return { success: false, error: "Hanya Superadmin yang dapat membuat akun dengan akses Superadmin." };
+      return { success: false, error: "Hanya Owner yang dapat membuat akun dengan akses Owner." };
+    }
+
+    // Management cannot create peer Management accounts -- only Owner can
+    if (data.role === "admin" && currentUser.role !== "superadmin") {
+      return { success: false, error: "Hanya Owner yang dapat membuat akun dengan akses Management." };
     }
 
     // Inputs validation
@@ -180,10 +196,11 @@ export async function registerNewUser(data: {
       return { success: false, error: `Gagal memberikan hak akses: ${roleError.message}` };
     }
 
-    revalidatePath("/users");
+    revalidatePath("/pengaturan/karyawan");
     revalidatePath("/");
     return { success: true, error: null };
-  } catch (error: any) {
-    return { success: false, error: error?.message || "Terjadi kesalahan internal" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal";
+    return { success: false, error: message };
   }
 }

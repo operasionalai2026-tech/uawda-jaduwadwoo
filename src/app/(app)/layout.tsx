@@ -1,15 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser, type AppRole } from "@/lib/auth";
+import { getCurrentUser, ROLE_LABEL } from "@/lib/auth";
 import { SidebarNav } from "./SidebarNav";
 import { LogOut, Shield } from "lucide-react";
-
-const ROLE_LABEL: Record<AppRole, string> = {
-  superadmin: "Superadmin",
-  admin: "Admin",
-  leader: "Leader",
-  staff: "Staff",
-};
 
 export default async function AppLayout({
   children,

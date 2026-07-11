@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type AppRole } from "@/lib/auth";
+import { type AppRole, ROLE_LABEL } from "@/lib/auth";
 import { updateUserRoleAndProfile } from "./actions";
 import { Edit2, Check, X, ShieldAlert } from "lucide-react";
 
@@ -48,7 +48,9 @@ export function UserRow({ user, divisions, currentUserRole }: UserRowProps) {
   };
 
   const currentDivName = divisions.find((d) => d.id === user.divisionId)?.name ?? "—";
-  const displayRole = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+  const displayRole = ROLE_LABEL[user.role];
+  const isPeerOrAboveTarget = user.role === "superadmin" || user.role === "admin";
+  const lockedForCurrentUser = currentUserRole !== "superadmin" && isPeerOrAboveTarget;
 
   if (isEditing) {
     return (
@@ -99,12 +101,12 @@ export function UserRow({ user, divisions, currentUserRole }: UserRowProps) {
             className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
             value={role}
             onChange={(e) => setRole(e.target.value as AppRole)}
-            disabled={loading || (currentUserRole !== "superadmin" && role === "superadmin")}
+            disabled={loading || lockedForCurrentUser}
           >
             <option value="staff">Staff</option>
-            <option value="leader">Leader</option>
-            <option value="admin">Admin</option>
-            {currentUserRole === "superadmin" && <option value="superadmin">Superadmin</option>}
+            <option value="leader">Leader Divisi</option>
+            {currentUserRole === "superadmin" && <option value="admin">Management</option>}
+            {currentUserRole === "superadmin" && <option value="superadmin">Owner</option>}
           </select>
         </td>
         <td className="p-4">
@@ -187,7 +189,7 @@ export function UserRow({ user, divisions, currentUserRole }: UserRowProps) {
           onClick={() => setIsEditing(true)}
           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition-all hover:border-slate-300"
           title="Edit Karyawan"
-          disabled={currentUserRole !== "superadmin" && user.role === "superadmin"}
+          disabled={lockedForCurrentUser}
         >
           <Edit2 className="h-3.5 w-3.5" />
         </button>
