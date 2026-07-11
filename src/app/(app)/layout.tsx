@@ -16,6 +16,7 @@ export default async function AppLayout({
   }
 
   const isAdminOrSuperadmin = user.role === "superadmin" || user.role === "admin";
+  const isLeader = user.role === "leader";
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased">
@@ -42,7 +43,7 @@ export default async function AppLayout({
           </div>
 
           {/* Nav Menu */}
-          <SidebarNav isAdminOrSuperadmin={isAdminOrSuperadmin} />
+          <SidebarNav isAdminOrSuperadmin={isAdminOrSuperadmin} isLeader={isLeader} />
         </div>
 
         {/* User Card & Sign Out */}

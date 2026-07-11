@@ -16,9 +16,12 @@ interface UserRowProps {
   };
   divisions: { id: string; name: string }[];
   currentUserRole: AppRole;
+  // Leader Divisi viewing their own Staff -- role & division are locked
+  // (both here and server-side) so they can only edit name/position/status.
+  restrictedToStaff?: boolean;
 }
 
-export function UserRow({ user, divisions, currentUserRole }: UserRowProps) {
+export function UserRow({ user, divisions, currentUserRole, restrictedToStaff }: UserRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user.fullName);
   const [divisionId, setDivisionId] = useState(user.divisionId || "");
@@ -82,32 +85,40 @@ export function UserRow({ user, divisions, currentUserRole }: UserRowProps) {
           />
         </td>
         <td className="p-4">
-          <select
-            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-            value={divisionId}
-            onChange={(e) => setDivisionId(e.target.value)}
-            disabled={loading}
-          >
-            <option value="">Tanpa Divisi (—)</option>
-            {divisions.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+          {restrictedToStaff ? (
+            <span className="text-slate-500">{currentDivName}</span>
+          ) : (
+            <select
+              className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              value={divisionId}
+              onChange={(e) => setDivisionId(e.target.value)}
+              disabled={loading}
+            >
+              <option value="">Tanpa Divisi (—)</option>
+              {divisions.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          )}
         </td>
         <td className="p-4">
-          <select
-            className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-            value={role}
-            onChange={(e) => setRole(e.target.value as AppRole)}
-            disabled={loading || lockedForCurrentUser}
-          >
-            <option value="staff">Staff</option>
-            <option value="leader">Leader Divisi</option>
-            {currentUserRole === "superadmin" && <option value="admin">Management</option>}
-            {currentUserRole === "superadmin" && <option value="superadmin">Owner</option>}
-          </select>
+          {restrictedToStaff ? (
+            <span className="text-slate-500">Staff</span>
+          ) : (
+            <select
+              className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              value={role}
+              onChange={(e) => setRole(e.target.value as AppRole)}
+              disabled={loading || lockedForCurrentUser}
+            >
+              <option value="staff">Staff</option>
+              <option value="leader">Leader Divisi</option>
+              {currentUserRole === "superadmin" && <option value="admin">Management</option>}
+              {currentUserRole === "superadmin" && <option value="superadmin">Owner</option>}
+            </select>
+          )}
         </td>
         <td className="p-4">
           <select

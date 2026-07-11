@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser, type AppRole } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
@@ -20,7 +20,6 @@ export async function updateUserRoleAndProfile(
   }
 ): Promise<UserActionState> {
   try {
-    const supabase = await createClient();
     const currentUser = await getCurrentUser();
 
     if (!currentUser) {
@@ -28,8 +27,8 @@ export async function updateUserRoleAndProfile(
     }
 
     // Role protection logic
-    if (currentUser.role !== "superadmin" && currentUser.role !== "admin") {
-      return { success: false, error: "Unauthorized. Hanya Management atau Owner yang dapat melakukan ini." };
+    if (currentUser.role !== "superadmin" && currentUser.role !== "admin" && currentUser.role !== "leader") {
+      return { success: false, error: "Unauthorized. Hanya Leader Divisi, Management, atau Owner yang dapat melakukan ini." };
     }
 
     // Management cannot promote anyone to Owner
@@ -42,12 +41,21 @@ export async function updateUserRoleAndProfile(
       return { success: false, error: "Hanya Owner yang dapat memberikan akses Management." };
     }
 
-    // Fetch the target user's current role
-    const { data: targetRoleRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Leader cannot grant Leader Divisi access -- only Management/Owner can
+    if (data.role === "leader" && currentUser.role === "leader") {
+      return { success: false, error: "Leader Divisi tidak dapat memberikan akses Leader Divisi." };
+    }
+
+    // Writes bypass RLS via the service-role client (same as registerNewUser
+    // -- user_roles has no non-superadmin RLS write policy by design, so all
+    // authorization for Management/Leader happens here in code instead).
+    const supabaseAdmin = createAdminClient();
+
+    // Fetch the target user's current role + division
+    const [{ data: targetRoleRow }, { data: targetProfile }] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+      supabaseAdmin.from("profiles").select("division_id").eq("id", userId).maybeSingle(),
+    ]);
 
     // Prevent Management from modifying an Owner's role or profile
     if (targetRoleRow?.role === "superadmin" && currentUser.role !== "superadmin") {
@@ -59,8 +67,19 @@ export async function updateUserRoleAndProfile(
       return { success: false, error: "Management tidak dapat mengubah profil atau hak akses sesama Management." };
     }
 
+    // Leader Divisi: can only edit Staff already in their own division, and
+    // can only keep them as Staff in that same division (no role/division change).
+    if (currentUser.role === "leader") {
+      if (targetRoleRow?.role !== "staff" || targetProfile?.division_id !== currentUser.divisionId) {
+        return { success: false, error: "Leader Divisi hanya bisa mengelola Staff di divisinya sendiri." };
+      }
+      if (data.role !== "staff" || data.divisionId !== currentUser.divisionId) {
+        return { success: false, error: "Leader Divisi tidak bisa mengubah role atau memindahkan divisi Staff." };
+      }
+    }
+
     // 1. Update profiles table
-    const { error: profileError } = await supabase
+    const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .upsert({
         id: userId,
@@ -76,7 +95,7 @@ export async function updateUserRoleAndProfile(
 
     // 2. Update user_roles table
     // Delete existing roles first to ensure one role per user
-    const { error: deleteRoleError } = await supabase
+    const { error: deleteRoleError } = await supabaseAdmin
       .from("user_roles")
       .delete()
       .eq("user_id", userId);
@@ -86,7 +105,7 @@ export async function updateUserRoleAndProfile(
     }
 
     // Insert new role
-    const { error: insertRoleError } = await supabase
+    const { error: insertRoleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
         user_id: userId,
@@ -122,8 +141,8 @@ export async function registerNewUser(data: {
     }
 
     // Role protection logic
-    if (currentUser.role !== "superadmin" && currentUser.role !== "admin") {
-      return { success: false, error: "Unauthorized. Hanya Management atau Owner yang dapat mendaftarkan karyawan baru." };
+    if (currentUser.role !== "superadmin" && currentUser.role !== "admin" && currentUser.role !== "leader") {
+      return { success: false, error: "Unauthorized. Hanya Leader Divisi, Management, atau Owner yang dapat mendaftarkan karyawan baru." };
     }
 
     // Management cannot create Owner accounts
@@ -134,6 +153,16 @@ export async function registerNewUser(data: {
     // Management cannot create peer Management accounts -- only Owner can
     if (data.role === "admin" && currentUser.role !== "superadmin") {
       return { success: false, error: "Hanya Owner yang dapat membuat akun dengan akses Management." };
+    }
+
+    // Leader Divisi can only create Staff accounts in their own division
+    if (currentUser.role === "leader") {
+      if (data.role !== "staff") {
+        return { success: false, error: "Leader Divisi hanya bisa membuat akun dengan akses Staff." };
+      }
+      if (data.divisionId !== currentUser.divisionId) {
+        return { success: false, error: "Leader Divisi hanya bisa membuat Staff untuk divisinya sendiri." };
+      }
     }
 
     // Inputs validation

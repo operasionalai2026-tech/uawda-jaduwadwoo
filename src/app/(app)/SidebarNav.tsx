@@ -10,13 +10,15 @@ import {
   CalendarDays,
   Settings,
   Target,
+  Users2,
 } from "lucide-react";
 
 interface SidebarNavProps {
   isAdminOrSuperadmin: boolean;
+  isLeader?: boolean;
 }
 
-export function SidebarNav({ isAdminOrSuperadmin }: SidebarNavProps) {
+export function SidebarNav({ isAdminOrSuperadmin, isLeader }: SidebarNavProps) {
   const pathname = usePathname();
 
   const links = [
@@ -30,6 +32,10 @@ export function SidebarNav({ isAdminOrSuperadmin }: SidebarNavProps) {
 
   if (isAdminOrSuperadmin) {
     links.push({ href: "/pengaturan", label: "Pengaturan", icon: Settings });
+  } else if (isLeader) {
+    // Leader Divisi only gets the Staff sub-page, not the full Pengaturan
+    // hub (Divisi CRUD & company-wide Role Tree stay Management/Owner-only).
+    links.push({ href: "/pengaturan/karyawan", label: "Staff Divisi", icon: Users2 });
   }
 
   return (

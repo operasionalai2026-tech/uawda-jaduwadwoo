@@ -9,10 +9,13 @@ import Link from "next/link";
 export default async function KaryawanPage() {
   const user = await getCurrentUser();
 
-  // Role Protection
-  if (!user || (user.role !== "superadmin" && user.role !== "admin")) {
+  // Role Protection -- Leader Divisi bisa akses juga, tapi dibatasi ke
+  // Staff di divisinya sendiri saja (lihat filter di bawah).
+  if (!user || (user.role !== "superadmin" && user.role !== "admin" && user.role !== "leader")) {
     redirect("/");
   }
+
+  const isLeader = user.role === "leader";
 
   // Create standard client for public reads (divisions) and admin client to fetch all profiles & roles
   const supabase = await createClient();
@@ -36,7 +39,7 @@ export default async function KaryawanPage() {
   const roleByUserId = new Map(rawRoles.map((r) => [r.user_id, r]));
 
   // Combine profile and role data
-  const users = rawProfiles.map((p) => {
+  let users = rawProfiles.map((p) => {
     const roleRow = roleByUserId.get(p.id);
     return {
       id: p.id,
@@ -48,6 +51,13 @@ export default async function KaryawanPage() {
     };
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
+  // Leader Divisi hanya boleh lihat & kelola Staff di divisinya sendiri.
+  if (isLeader) {
+    users = users.filter((u) => u.role === "staff" && u.divisionId === user.divisionId);
+  }
+
+  const ownDivision = activeDivisions.find((d) => d.id === user.divisionId) ?? null;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -55,7 +65,7 @@ export default async function KaryawanPage() {
         <div>
           <div className="flex items-center gap-2">
             <Link
-              href="/pengaturan"
+              href={isLeader ? "/" : "/pengaturan"}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -65,17 +75,23 @@ export default async function KaryawanPage() {
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-500 ml-10">
-            Kelola profil divisi, jabatan, dan hak akses operasional seluruh karyawan.
+            {isLeader
+              ? "Kelola Staff di divisi Anda -- tambah Staff baru, ubah jabatan, dan status kerja."
+              : "Kelola profil divisi, jabatan, dan hak akses operasional seluruh karyawan."}
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 border border-blue-100 text-xs font-semibold text-blue-700 sm:ml-10">
           <Users2 className="h-4 w-4" />
-          <span>Total: {users.length} Karyawan</span>
+          <span>Total: {users.length} {isLeader ? "Staff Divisi Anda" : "Karyawan"}</span>
         </div>
       </div>
 
       {/* Create User Form Section */}
-      <CreateUserForm divisions={activeDivisions} currentUserRole={user.role} />
+      <CreateUserForm
+        divisions={activeDivisions}
+        currentUserRole={user.role}
+        lockedDivision={isLeader ? ownDivision : null}
+      />
 
       {/* Main Table Card */}
       <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm">
@@ -98,6 +114,7 @@ export default async function KaryawanPage() {
                   user={u}
                   divisions={activeDivisions}
                   currentUserRole={user.role}
+                  restrictedToStaff={isLeader}
                 />
               ))}
               {users.length === 0 && (

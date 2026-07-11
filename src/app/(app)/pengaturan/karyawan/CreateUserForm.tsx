@@ -8,15 +8,19 @@ import { UserPlus, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucid
 interface CreateUserFormProps {
   divisions: { id: string; name: string }[];
   currentUserRole: AppRole;
+  // Set when the current user is a Leader Divisi -- role is locked to Staff
+  // and division is locked to this value, both server-enforced too.
+  lockedDivision?: { id: string; name: string } | null;
 }
 
-export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormProps) {
+export function CreateUserForm({ divisions, currentUserRole, lockedDivision }: CreateUserFormProps) {
+  const isLeader = currentUserRole === "leader";
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [position, setPosition] = useState("");
-  const [divisionId, setDivisionId] = useState("");
+  const [divisionId, setDivisionId] = useState(isLeader ? (lockedDivision?.id ?? "") : "");
   const [role, setRole] = useState<AppRole>("staff");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -48,7 +52,7 @@ export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormPro
       setPassword("");
       setFullName("");
       setPosition("");
-      setDivisionId("");
+      setDivisionId(isLeader ? (lockedDivision?.id ?? "") : "");
       setRole("staff");
       // Close form after 2 seconds
       setTimeout(() => {
@@ -72,7 +76,7 @@ export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormPro
           className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
           <UserPlus className="h-4 w-4" />
-          <span>{isOpen ? "Tutup Form" : "Tambah Karyawan Baru"}</span>
+          <span>{isOpen ? "Tutup Form" : isLeader ? "Tambah Staff Baru" : "Tambah Karyawan Baru"}</span>
         </button>
       </div>
 
@@ -82,7 +86,9 @@ export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormPro
           className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-4 transition-all duration-300 animate-in fade-in slide-in-from-top-2"
         >
           <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">
-            Form Pembuatan Akun Karyawan Baru
+            {isLeader
+              ? `Form Pembuatan Akun Staff Baru -- Divisi ${lockedDivision?.name ?? "Anda"}`
+              : "Form Pembuatan Akun Karyawan Baru"}
           </h3>
 
           {error && (
@@ -167,35 +173,47 @@ export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormPro
             {/* Divisi */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-600">Divisi</label>
-              <select
-                disabled={loading}
-                value={divisionId}
-                onChange={(e) => setDivisionId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs focus:border-blue-500 focus:outline-none transition-colors"
-              >
-                <option value="">Tanpa Divisi (—)</option>
-                {divisions.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+              {isLeader ? (
+                <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
+                  {lockedDivision?.name ?? "Divisi Anda"}
+                </div>
+              ) : (
+                <select
+                  disabled={loading}
+                  value={divisionId}
+                  onChange={(e) => setDivisionId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs focus:border-blue-500 focus:outline-none transition-colors"
+                >
+                  <option value="">Tanpa Divisi (—)</option>
+                  {divisions.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Hak Akses */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-600">Hak Akses (Role)</label>
-              <select
-                disabled={loading}
-                value={role}
-                onChange={(e) => setRole(e.target.value as AppRole)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs focus:border-blue-500 focus:outline-none transition-colors"
-              >
-                <option value="staff">Staff</option>
-                <option value="leader">Leader Divisi</option>
-                {currentUserRole === "superadmin" && <option value="admin">Management</option>}
-                {currentUserRole === "superadmin" && <option value="superadmin">Owner</option>}
-              </select>
+              {isLeader ? (
+                <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
+                  Staff
+                </div>
+              ) : (
+                <select
+                  disabled={loading}
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as AppRole)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs focus:border-blue-500 focus:outline-none transition-colors"
+                >
+                  <option value="staff">Staff</option>
+                  <option value="leader">Leader Divisi</option>
+                  {currentUserRole === "superadmin" && <option value="admin">Management</option>}
+                  {currentUserRole === "superadmin" && <option value="superadmin">Owner</option>}
+                </select>
+              )}
             </div>
           </div>
 
