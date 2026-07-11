@@ -20,10 +20,13 @@ export default async function DivisionKpiPage({
   const supabase = await createClient();
   const user = await getCurrentUser();
 
-  const canManage =
+  const canManageMetrics =
     user?.role === "superadmin" ||
     user?.role === "admin" ||
     (user?.role === "leader" && user.divisionId === divisionId);
+  // Buka/kunci periode KPI adalah aksi governance lintas-perusahaan (semua
+  // divisi memakai periode yang sama), dikunci ke Owner saja.
+  const canManagePeriods = user?.role === "superadmin";
 
   const [{ data: division }, { data: metrics }, { data: periods }] =
     await Promise.all([
@@ -134,7 +137,7 @@ export default async function DivisionKpiPage({
       </div>
 
       {/* Period creation */}
-      {canManage && <PeriodForm divisionId={divisionId} />}
+      {canManagePeriods && <PeriodForm divisionId={divisionId} />}
 
       {/* Score and Main KPI Table Card */}
       {selectedPeriod && (
@@ -197,7 +200,7 @@ export default async function DivisionKpiPage({
                         <td className="p-4 text-center text-slate-600 font-medium">{(Number(m.weight) * 100).toFixed(0)}%</td>
                         <td className="p-4 text-center text-slate-800 font-semibold">{Number(m.target_value)}</td>
                         <td className="p-4 text-center">
-                          {canManage && selectedPeriod.status === "open" ? (
+                          {canManageMetrics && selectedPeriod.status === "open" ? (
                             <div className="inline-block w-24">
                               <EntryForm
                                 divisionId={divisionId}
@@ -235,7 +238,7 @@ export default async function DivisionKpiPage({
       )}
 
       {/* Metric creation form */}
-      {canManage && (
+      {canManageMetrics && (
         <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
             <Plus className="h-4.5 w-4.5 text-blue-600" />

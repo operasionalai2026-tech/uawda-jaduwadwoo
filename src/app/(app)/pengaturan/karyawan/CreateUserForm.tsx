@@ -19,7 +19,7 @@ export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormPro
   const [divisionId, setDivisionId] = useState("");
   const [role, setRole] = useState<AppRole>("staff");
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -192,9 +192,9 @@ export function CreateUserForm({ divisions, currentUserRole }: CreateUserFormPro
                 className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs focus:border-blue-500 focus:outline-none transition-colors"
               >
                 <option value="staff">Staff</option>
-                <option value="leader">Leader</option>
-                <option value="admin">Admin</option>
-                {currentUserRole === "superadmin" && <option value="superadmin">Superadmin</option>}
+                <option value="leader">Leader Divisi</option>
+                {currentUserRole === "superadmin" && <option value="admin">Management</option>}
+                {currentUserRole === "superadmin" && <option value="superadmin">Owner</option>}
               </select>
             </div>
           </div>

@@ -12,7 +12,8 @@ import {
   Layers,
   AlertCircle,
   Users2,
-  ListTodo
+  ListTodo,
+  Target
 } from "lucide-react";
 import Link from "next/link";
 
@@ -80,6 +81,41 @@ export default async function DashboardPage() {
   const activeEntries = entries ?? [];
   const allActionItems = actionItems ?? [];
   const allMeetings = meetings ?? [];
+
+  // Step 2b: Tugas & Poin widget - reviewer sees pending approvals, staff sees own points
+  const canReviewTasks =
+    user?.role === "superadmin" || user?.role === "admin" || user?.role === "leader";
+
+  const { data: openCycle } = await supabase
+    .from("eval_cycles")
+    .select("id, name")
+    .eq("status", "open")
+    .order("start_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let pendingTaskCount = 0;
+  let myTaskPoints = 0;
+
+  if (canReviewTasks) {
+    let pendingQuery = supabase
+      .from("kpi_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "submitted");
+    if (user?.role === "leader" && user.divisionId) {
+      pendingQuery = pendingQuery.eq("division_id", user.divisionId);
+    }
+    const { count } = await pendingQuery;
+    pendingTaskCount = count ?? 0;
+  } else if (user && openCycle) {
+    const { data: myScore } = await supabase
+      .from("individual_task_scores")
+      .select("total_points")
+      .eq("assignee_id", user.id)
+      .eq("cycle_id", openCycle.id)
+      .maybeSingle();
+    myTaskPoints = myScore?.total_points ?? 0;
+  }
 
   // 1. Quick Stats Calculations
   const totalDivisions = activeDivisions.length;
@@ -237,6 +273,33 @@ export default async function DashboardPage() {
             <p className="mt-1 text-xs text-slate-500">Rapat terjadwal berikutnya</p>
           </div>
         </div>
+
+        {/* Tugas & Poin */}
+        <Link
+          href="/tugas"
+          className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200/80 transition-all duration-300 hover:shadow-md hover:border-slate-300"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+              {canReviewTasks ? "Tugas Menunggu Approval" : "Poin Saya"}
+            </span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform duration-300">
+              <Target className="h-5 w-5" />
+            </span>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-3xl font-extrabold text-slate-900">
+              {canReviewTasks ? pendingTaskCount : myTaskPoints}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              {canReviewTasks
+                ? "Task dari Forum menunggu Anda review"
+                : openCycle
+                  ? `Cycle ${openCycle.name} berjalan`
+                  : "Belum ada cycle aktif"}
+            </p>
+          </div>
+        </Link>
       </div>
 
       {/* Grid: Papan Status Divisi & Attention Panel */}

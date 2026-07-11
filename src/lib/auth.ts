@@ -2,6 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AppRole = "superadmin" | "admin" | "leader" | "staff";
 
+// Display labels only -- the stored role values (superadmin/admin/leader/
+// staff) are unchanged; this just renames them in the UI to match the
+// Owner -> Management -> Leader Divisi -> Staff org structure.
+export const ROLE_LABEL: Record<AppRole, string> = {
+  superadmin: "Owner",
+  admin: "Management",
+  leader: "Leader Divisi",
+  staff: "Staff",
+};
+
 export type CurrentUser = {
   id: string;
   email: string | null;
