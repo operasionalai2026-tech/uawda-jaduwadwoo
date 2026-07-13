@@ -21,11 +21,11 @@ export function ActionItemForm({
         name="title"
         placeholder="Action item..."
         required
-        className="flex-1 min-w-40 rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="flex-1 min-w-40 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
       />
       <select
         name="assignee_id"
-        className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
       >
         <option value="">PIC...</option>
         {profiles.map((p) => (
@@ -37,12 +37,12 @@ export function ActionItemForm({
       <input
         name="due_date"
         type="date"
-        className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
       />
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100 disabled:opacity-50"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-3 py-1.5 text-sm hover:bg-neutral-100 disabled:opacity-50"
       >
         Tambah
       </button>

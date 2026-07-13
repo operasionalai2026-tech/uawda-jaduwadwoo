@@ -133,7 +133,7 @@ export default async function ThreadPage({
 
       <div className="space-y-3">
         {(posts ?? []).map((post) => (
-          <div key={post.id} className="rounded-lg border border-neutral-200 p-3">
+          <div key={post.id} className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm p-3">
             <p className="mb-1 text-xs font-medium text-neutral-500">
               {authorNameById.get(post.author_id) ?? "-"} &middot;{" "}
               {new Date(post.created_at).toLocaleString("id-ID")}
@@ -158,7 +158,7 @@ export default async function ThreadPage({
             {(tasks ?? []).map((t) => (
               <li
                 key={t.id}
-                className="flex items-center justify-between rounded-md border border-neutral-200 px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white shadow-sm px-3 py-2 text-sm"
               >
                 <div>
                   <p className="font-medium">{t.title}</p>

@@ -21,14 +21,14 @@ export function NewThreadForm({
   return (
     <form
       action={formAction}
-      className="space-y-2 rounded-lg border border-neutral-200 p-4"
+      className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 shadow-sm p-4"
     >
       <p className="text-sm font-medium">Buat thread baru</p>
       <div className="flex flex-wrap gap-2">
         <select
           name="category_id"
           required
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+          className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
         >
           <option value="">Kategori&hellip;</option>
           {categories.map((c) => (
@@ -41,18 +41,18 @@ export function NewThreadForm({
           name="title"
           placeholder="Judul thread"
           required
-          className="flex-1 min-w-48 rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+          className="flex-1 min-w-48 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
         />
       </div>
       <textarea
         name="content"
         placeholder="Isi pesan pertama (opsional)"
         rows={2}
-        className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
       />
 
       {canCreatePrivate && (
-        <div className="space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-3">
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 shadow-sm p-3">
           <div className="flex items-center gap-4 text-sm">
             <label className="flex items-center gap-1.5">
               <input
@@ -86,7 +86,7 @@ export function NewThreadForm({
                 {divisions.map((d) => (
                   <label
                     key={d.id}
-                    className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs"
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white shadow-sm px-2 py-1 text-xs"
                   >
                     <input type="checkbox" name="division_ids" value={d.id} />
                     {d.name}
@@ -104,7 +104,7 @@ export function NewThreadForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-rose-600/15 transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
       >
         {pending ? "Membuat..." : "Buat thread"}
       </button>

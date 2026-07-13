@@ -31,7 +31,7 @@ export function ActionItemStatusSelect({
           updateActionItemStatus(meetingId, itemId, value);
         });
       }}
-      className="rounded-md border border-neutral-300 px-2 py-1 text-xs disabled:opacity-50"
+      className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1 text-xs disabled:opacity-50"
     >
       {Object.entries(STATUS_LABEL).map(([value, label]) => (
         <option key={value} value={value}>

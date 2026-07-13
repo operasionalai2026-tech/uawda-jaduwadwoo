@@ -3,7 +3,6 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   TrendingUp,
   TrendingDown,
-  AlertTriangle,
   Calendar,
   CheckCircle2,
   Clock,
@@ -11,7 +10,6 @@ import {
   Activity,
   Layers,
   AlertCircle,
-  Users2,
   ListTodo,
   Target
 } from "lucide-react";
@@ -199,7 +197,7 @@ export default async function DashboardPage() {
       {/* Top Welcome and Title */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">
             Command Center
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -218,7 +216,7 @@ export default async function DashboardPage() {
         <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200/80 transition-all duration-300 hover:shadow-md hover:border-slate-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">Total Divisi</span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform duration-300">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300">
               <Layers className="h-5 w-5" />
             </span>
           </div>
@@ -232,7 +230,7 @@ export default async function DashboardPage() {
         <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200/80 transition-all duration-300 hover:shadow-md hover:border-slate-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">Rata-rata KPI</span>
-            <span className={`flex h-9 w-9 items-center justify-center rounded-xl group-hover:scale-110 transition-transform duration-300 ${averageKpiScore >= 80 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
+            <span className={`flex h-9 w-9 items-center justify-center rounded-xl group-hover:scale-110 transition-transform duration-300 ${averageKpiScore >= 80 ? "bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/25" : "bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25"}`}>
               {averageKpiScore >= 80 ? <TrendingUp className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
             </span>
           </div>
@@ -250,7 +248,7 @@ export default async function DashboardPage() {
         <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200/80 transition-all duration-300 hover:shadow-md hover:border-slate-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">Overdue Task</span>
-            <span className={`flex h-9 w-9 items-center justify-center rounded-xl group-hover:scale-110 transition-transform duration-300 ${overdueItems.length > 0 ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-500"}`}>
+            <span className={`flex h-9 w-9 items-center justify-center rounded-xl group-hover:scale-110 transition-transform duration-300 ${overdueItems.length > 0 ? "bg-gradient-to-tr from-rose-600 to-pink-500 text-white shadow-md shadow-rose-500/25" : "bg-slate-100 text-slate-400"}`}>
               <ListTodo className="h-5 w-5" />
             </span>
           </div>
@@ -264,7 +262,7 @@ export default async function DashboardPage() {
         <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200/80 transition-all duration-300 hover:shadow-md hover:border-slate-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">Rapat Mendatang</span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:scale-110 transition-transform duration-300">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 to-violet-500 text-white shadow-md shadow-purple-500/25 group-hover:scale-110 transition-transform duration-300">
               <Calendar className="h-5 w-5" />
             </span>
           </div>
@@ -283,7 +281,7 @@ export default async function DashboardPage() {
             <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">
               {canReviewTasks ? "Tugas Menunggu Approval" : "Poin Saya"}
             </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform duration-300">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 group-hover:scale-110 transition-transform duration-300">
               <Target className="h-5 w-5" />
             </span>
           </div>

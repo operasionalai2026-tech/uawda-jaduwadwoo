@@ -32,7 +32,7 @@ export default async function ProyekPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Proyek</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">Proyek</h1>
         </div>
         <p className="mt-1 text-sm text-slate-500 ml-10">
           Task berpoin yang tidak berasal dari diskusi Forum -- langsung dibuat dari sini, bisa

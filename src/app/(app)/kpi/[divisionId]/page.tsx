@@ -101,7 +101,7 @@ export default async function DivisionKpiPage({
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">
             {division.name}
           </h1>
         </div>
@@ -161,7 +161,7 @@ export default async function DivisionKpiPage({
 
             {/* Helper box */}
             <div className="md:col-span-2 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="h-10 w-10 shrink-0 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/25 flex items-center justify-center">
                 <AlertCircle className="h-5 w-5" />
               </div>
               <div className="space-y-0.5">

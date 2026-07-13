@@ -38,7 +38,7 @@ export default async function KatalogPoinPage() {
         {(catalog ?? []).map((c) => (
           <li
             key={c.id}
-            className="flex items-center justify-between rounded-md border border-neutral-200 px-3 py-2 text-sm"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white shadow-sm px-3 py-2 text-sm"
           >
             <div>
               <p className="font-medium">

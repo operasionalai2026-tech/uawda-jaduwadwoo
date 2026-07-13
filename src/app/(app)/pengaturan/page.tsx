@@ -44,7 +44,7 @@ export default async function PengaturanPage() {
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Pengaturan</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">Pengaturan</h1>
         <p className="mt-1 text-sm text-slate-500">
           Satu pintu untuk mengelola struktur perusahaan: karyawan, divisi, dan hierarki role.
         </p>
@@ -56,7 +56,7 @@ export default async function PengaturanPage() {
           href="/pengaturan/karyawan"
           className="group flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-rose-600 group-hover:text-white transition-all">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/25 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-rose-600 group-hover:text-white transition-all">
             <Users2 className="h-5 w-5" />
           </span>
           <div>
@@ -68,7 +68,7 @@ export default async function PengaturanPage() {
           href="/pengaturan/divisi"
           className="group flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-rose-600 group-hover:text-white transition-all">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 to-violet-500 text-white shadow-md shadow-purple-500/25 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-rose-600 group-hover:text-white transition-all">
             <Layers className="h-5 w-5" />
           </span>
           <div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { NewMeetingForm } from "./NewMeetingForm";
-import { Calendar, Plus, Users, Clock, ArrowRight, Layers } from "lucide-react";
+import { Calendar, Plus, Clock, ArrowRight, Lock } from "lucide-react";
 
 const STATUS_LABEL: Record<string, string> = {
   scheduled: "Terjadwal",
@@ -15,15 +15,25 @@ export default async function MeetingPage() {
   const supabase = await createClient();
   const user = await getCurrentUser();
 
-  const [{ data: meetings }, { data: divisions }] = await Promise.all([
+  // RLS sudah menyaring: rapat privat cuma muncul kalau divisi user
+  // di-include, dibuat sendiri, atau user Owner.
+  const [{ data: meetings }, { data: divisions }, { data: meetingDivisions }] = await Promise.all([
     supabase
       .from("meetings")
-      .select("id, title, division_id, scheduled_at, status")
+      .select("id, title, visibility, scheduled_at, status")
       .order("scheduled_at", { ascending: false }),
     supabase.from("divisions").select("id, name").order("name"),
+    supabase.from("meeting_divisions").select("meeting_id, division_id"),
   ]);
 
   const divisionNameById = new Map((divisions ?? []).map((d) => [d.id, d.name]));
+  const divisionNamesByMeeting = new Map<string, string[]>();
+  for (const md of meetingDivisions ?? []) {
+    const list = divisionNamesByMeeting.get(md.meeting_id) ?? [];
+    const name = divisionNameById.get(md.division_id);
+    if (name) list.push(name);
+    divisionNamesByMeeting.set(md.meeting_id, list);
+  }
   const canCreate =
     user?.role === "superadmin" || user?.role === "admin" || user?.role === "leader";
 
@@ -40,7 +50,7 @@ export default async function MeetingPage() {
     <div className="space-y-8 pb-12">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">
           Rapat &amp; Notulen
         </h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -65,7 +75,11 @@ export default async function MeetingPage() {
         
         <div className="grid gap-3 max-w-3xl">
           {(meetings ?? []).map((m) => {
-            const divisionName = m.division_id ? divisionNameById.get(m.division_id) : "Lintas Divisi";
+            const divisionNames = divisionNamesByMeeting.get(m.id) ?? [];
+            const divisionLabel =
+              m.visibility === "private"
+                ? divisionNames.join(", ") || "Divisi terpilih"
+                : "Semua Divisi";
             const dateObj = new Date(m.scheduled_at);
             
             return (
@@ -86,8 +100,14 @@ export default async function MeetingPage() {
                     
                     <p className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap font-medium">
                       <span className="bg-slate-100 border border-slate-200 text-slate-600 font-semibold px-2 py-0.5 rounded text-[10px] uppercase">
-                        {divisionName}
+                        {divisionLabel}
                       </span>
+                      {m.visibility === "private" && (
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-100">
+                          <Lock className="h-3 w-3" />
+                          <span>Privat</span>
+                        </span>
+                      )}
                       <span>&bull;</span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5 text-slate-400" />

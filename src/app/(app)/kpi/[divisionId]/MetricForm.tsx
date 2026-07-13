@@ -14,19 +14,19 @@ export function MetricForm({ divisionId }: { divisionId: string }) {
   return (
     <form
       action={formAction}
-      className="grid max-w-2xl grid-cols-2 gap-2 rounded-md border border-neutral-200 p-4 text-sm"
+      className="grid max-w-2xl grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white shadow-sm p-4 text-sm"
     >
       <input type="hidden" name="division_id" value={divisionId} />
       <input
         name="name"
         placeholder="Nama metric"
         required
-        className="col-span-2 rounded-md border border-neutral-300 px-2 py-1"
+        className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       />
       <input
         name="unit"
         placeholder="Unit (%, unit, menit, ...)"
-        className="rounded-md border border-neutral-300 px-2 py-1"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       />
       <input
         name="weight"
@@ -36,7 +36,7 @@ export function MetricForm({ divisionId }: { divisionId: string }) {
         max="1"
         placeholder="Bobot (0-1)"
         required
-        className="rounded-md border border-neutral-300 px-2 py-1"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       />
       <input
         name="target_value"
@@ -44,18 +44,18 @@ export function MetricForm({ divisionId }: { divisionId: string }) {
         step="any"
         placeholder="Target"
         required
-        className="rounded-md border border-neutral-300 px-2 py-1"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       />
       <select
         name="direction"
-        className="rounded-md border border-neutral-300 px-2 py-1"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       >
         <option value="higher_better">Semakin tinggi semakin baik</option>
         <option value="lower_better">Semakin rendah semakin baik</option>
       </select>
       <select
         name="source_type"
-        className="col-span-2 rounded-md border border-neutral-300 px-2 py-1"
+        className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       >
         <option value="manual">Manual</option>
         <option value="auto_iresis">Auto - IRESIS</option>

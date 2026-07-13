@@ -14,19 +14,19 @@ export function NewProjectForm() {
         name="name"
         placeholder="Nama proyek"
         required
-        className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
       />
       <textarea
         name="description"
         placeholder="Deskripsi proyek (opsional)"
         rows={2}
-        className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
       />
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-rose-600/15 transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
       >
         {pending ? "Membuat..." : "Buat Proyek"}
       </button>

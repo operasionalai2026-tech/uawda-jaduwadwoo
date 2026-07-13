@@ -91,7 +91,7 @@ export default async function TugasPage() {
     <div className="space-y-8 pb-12">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Tugas &amp; Poin</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">Tugas &amp; Poin</h1>
           <p className="mt-1 text-sm text-slate-500">
             Task bernilai poin yang di-assign dari diskusi Forum, jadi komponen KPI individu karyawan.
           </p>
@@ -119,7 +119,7 @@ export default async function TugasPage() {
       {/* Poin saya cycle aktif */}
       <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25">
             <Award className="h-5.5 w-5.5" />
           </span>
           <div>

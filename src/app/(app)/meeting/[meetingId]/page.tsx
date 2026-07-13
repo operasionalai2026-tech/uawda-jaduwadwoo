@@ -6,7 +6,7 @@ import { DecisionForm } from "./DecisionForm";
 import { ActionItemForm } from "./ActionItemForm";
 import { ActionItemStatusSelect } from "./ActionItemStatusSelect";
 import { AudioRecorder } from "./AudioRecorder";
-import { Sparkles, Calendar, MapPin, Users, CheckSquare, FileText } from "lucide-react";
+import { Sparkles, Calendar, MapPin, Users, CheckSquare, FileText, Lock } from "lucide-react";
 import Link from "next/link";
 
 export default async function MeetingDetailPage({
@@ -18,23 +18,54 @@ export default async function MeetingDetailPage({
   const supabase = await createClient();
   const user = await getCurrentUser();
 
+  // Ambil meeting dulu -- RLS mengembalikan null kalau rapat ini privat dan
+  // divisi user tidak di-include (kecuali dia pembuatnya atau Owner).
+  const { data: meeting } = await supabase
+    .from("meetings")
+    .select("*")
+    .eq("id", meetingId)
+    .maybeSingle();
+
+  if (!meeting) {
+    return (
+      <div className="max-w-2xl space-y-3">
+        <h1 className="text-xl font-semibold">Rapat tidak ditemukan</h1>
+        <p className="text-sm text-neutral-500">
+          Rapat ini tidak ada, atau bersifat privat dan divisi Anda tidak disertakan.
+        </p>
+        <Link href="/meeting" className="text-sm font-semibold text-blue-600 hover:underline">
+          &larr; Kembali ke daftar rapat
+        </Link>
+      </div>
+    );
+  }
+
   const [
-    { data: meeting },
     { data: attendees },
     { data: notulenRow },
     { data: decisions },
     { data: actionItems },
     { data: profiles },
+    { data: meetingDivisions },
   ] = await Promise.all([
-    supabase.from("meetings").select("*").eq("id", meetingId).single(),
     supabase.from("meeting_attendees").select("user_id, rsvp_status, attended").eq("meeting_id", meetingId),
     supabase.from("notulen").select("content, source").eq("meeting_id", meetingId).maybeSingle(),
     supabase.from("decisions").select("id, content, source, created_at").eq("meeting_id", meetingId).order("created_at"),
     supabase.from("action_items").select("id, title, assignee_id, due_date, status, source").eq("meeting_id", meetingId).order("created_at"),
     supabase.from("profiles").select("id, full_name"),
+    meeting.visibility === "private"
+      ? supabase.from("meeting_divisions").select("division_id, divisions(name)").eq("meeting_id", meetingId)
+      : Promise.resolve({ data: [] as { division_id: string; divisions: unknown }[] }),
   ]);
 
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+  const meetingDivisionNames = (meetingDivisions ?? [])
+    .map((d) => {
+      const rel = d.divisions;
+      const div = Array.isArray(rel) ? rel[0] : rel;
+      return (div as { name?: string } | null)?.name;
+    })
+    .filter(Boolean);
   const myRsvp = (attendees ?? []).find((a) => a.user_id === user?.id)?.rsvp_status;
   const canEditNotulen =
     user?.role === "superadmin" || user?.role === "admin" || user?.role === "leader";
@@ -76,11 +107,21 @@ export default async function MeetingDetailPage({
       {/* Title block */}
       <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-4">
         <div>
-          <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-            Rapat Divisi
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+              {meeting.visibility === "private"
+                ? meetingDivisionNames.join(", ") || "Divisi terpilih"
+                : "Semua Divisi"}
+            </span>
+            {meeting.visibility === "private" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                <Lock className="h-3 w-3" />
+                Privat
+              </span>
+            )}
+          </div>
           <h1 className="mt-2 text-2xl font-extrabold text-slate-900 leading-tight">
-            {meeting?.title}
+            {meeting.title}
           </h1>
         </div>
 

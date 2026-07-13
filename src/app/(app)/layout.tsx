@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentUser, ROLE_LABEL } from "@/lib/auth";
 import { SidebarNav } from "./SidebarNav";
 import { LogOut, Shield } from "lucide-react";
@@ -19,15 +18,19 @@ export default async function AppLayout({
   const isLeader = user.role === "leader";
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased">
+    <div className="flex min-h-screen bg-[#f7f8fc] text-slate-800 antialiased">
       {/* Sidebar */}
-      <aside className="relative flex w-64 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-950 p-5 text-white">
-        {/* Glow effect at top left */}
+      <aside className="relative flex w-64 shrink-0 flex-col justify-between border-r border-slate-800/60 bg-gradient-to-b from-slate-950 via-slate-950 to-[#1a1030] p-5 text-white">
+        {/* Glow effects */}
         <div
           aria-hidden
-          className="pointer-events-none absolute top-0 left-0 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl"
+          className="pointer-events-none absolute top-0 left-0 h-48 w-48 rounded-full bg-blue-500/15 blur-3xl"
         />
-        
+        <div
+          aria-hidden
+          className="pointer-events-none absolute bottom-24 right-0 h-56 w-56 rounded-full bg-rose-500/10 blur-3xl"
+        />
+
         <div className="relative z-10 flex flex-col gap-8">
           {/* Logo Brand */}
           <div className="flex items-center gap-2">
@@ -78,8 +81,14 @@ export default async function AppLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-slate-50 p-8">
-        <div className="mx-auto max-w-6xl">
+      <main className="relative flex-1 overflow-y-auto p-8">
+        {/* Latar berwarna lembut biar halaman tidak terasa datar */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
+          <div className="absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-rose-200/25 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-amber-100/30 blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-6xl animate-page-in">
           {children}
         </div>
       </main>

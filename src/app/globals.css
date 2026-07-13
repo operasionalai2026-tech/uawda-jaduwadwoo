@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f8fc;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -15,5 +15,61 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+}
+
+/* Warna aksen bawaan untuk radio/checkbox biar senada dengan tema */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #2563eb;
+}
+
+/* Seleksi teks bernuansa brand */
+::selection {
+  background: #fecdd3;
+  color: #881337;
+}
+
+/* Scrollbar lembut */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Fokus keyboard yang ramah di semua kontrol tanpa harus menulis ulang tiap form */
+@layer base {
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+  }
+}
+
+/* Animasi masuk halus untuk konten halaman */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-page-in {
+  animation: page-in 0.35s ease-out both;
 }

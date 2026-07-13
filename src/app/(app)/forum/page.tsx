@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { NewThreadForm } from "./NewThreadForm";
 import { NewCategoryForm } from "./NewCategoryForm";
-import { MessageSquare, Plus, CheckCircle, ArrowRight, User2, Layers, Lock } from "lucide-react";
+import { MessageSquare, CheckCircle, ArrowRight, User2, Layers, Lock } from "lucide-react";
 
 export default async function ForumPage() {
   const supabase = await createClient();
@@ -37,7 +37,7 @@ export default async function ForumPage() {
     <div className="space-y-8 pb-12">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">
           Forum Diskusi
         </h1>
         <p className="mt-1 text-sm text-slate-500">

@@ -17,7 +17,7 @@ export function PeriodForm({ divisionId }: { divisionId: string }) {
       <input type="hidden" name="division_id" value={divisionId} />
       <select
         name="period_type"
-        className="rounded-md border border-neutral-300 px-2 py-1"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       >
         <option value="monthly">Bulanan</option>
         <option value="yearly">Tahunan</option>
@@ -26,7 +26,7 @@ export function PeriodForm({ divisionId }: { divisionId: string }) {
         name="year"
         type="number"
         defaultValue={now.getFullYear()}
-        className="w-20 rounded-md border border-neutral-300 px-2 py-1"
+        className="w-20 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       />
       <input
         name="month"
@@ -34,12 +34,12 @@ export function PeriodForm({ divisionId }: { divisionId: string }) {
         min="1"
         max="12"
         defaultValue={now.getMonth() + 1}
-        className="w-16 rounded-md border border-neutral-300 px-2 py-1"
+        className="w-16 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1"
       />
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md border border-neutral-300 px-2 py-1 hover:bg-neutral-100 disabled:opacity-50"
+        className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1 hover:bg-neutral-100 disabled:opacity-50"
       >
         {pending ? "..." : "Buat periode"}
       </button>

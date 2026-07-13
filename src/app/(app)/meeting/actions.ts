@@ -16,13 +16,18 @@ export async function createMeeting(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const divisionId = String(formData.get("division_id") ?? "") || null;
+  const visibility = String(formData.get("visibility") ?? "public") === "private" ? "private" : "public";
+  const divisionIds = formData.getAll("division_ids").map(String).filter(Boolean);
+
+  if (visibility === "private" && divisionIds.length === 0) {
+    return { error: "Pilih minimal satu divisi untuk rapat privat." };
+  }
 
   const { data: meeting, error } = await supabase
     .from("meetings")
     .insert({
       title: String(formData.get("title")),
-      division_id: divisionId,
+      visibility,
       scheduled_at: String(formData.get("scheduled_at")),
       location: String(formData.get("location") ?? "") || null,
       agenda: String(formData.get("agenda") ?? "") || null,
@@ -32,6 +37,13 @@ export async function createMeeting(
     .single();
 
   if (error) return { error: error.message };
+
+  if (visibility === "private") {
+    const { error: divisionError } = await supabase
+      .from("meeting_divisions")
+      .insert(divisionIds.map((division_id) => ({ meeting_id: meeting.id, division_id })));
+    if (divisionError) return { error: divisionError.message };
+  }
 
   revalidatePath("/meeting");
   redirect(`/meeting/${meeting.id}`);

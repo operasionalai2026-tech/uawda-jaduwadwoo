@@ -30,7 +30,7 @@ export default async function KriteriaPage() {
             {individual.map((c) => (
               <li
                 key={c.id}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm"
+                className="rounded-xl border border-slate-200 bg-white shadow-sm px-3 py-2 text-sm"
               >
                 <p className="font-medium">
                   {c.name}{" "}
@@ -57,7 +57,7 @@ export default async function KriteriaPage() {
             {crossDivision.map((c) => (
               <li
                 key={c.id}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm"
+                className="rounded-xl border border-slate-200 bg-white shadow-sm px-3 py-2 text-sm"
               >
                 <p className="font-medium">
                   {c.name}{" "}

@@ -11,7 +11,7 @@ export function CreateCycleForm() {
   return (
     <form
       action={formAction}
-      className="flex flex-wrap items-end gap-2 rounded-lg border border-neutral-200 p-3"
+      className="flex flex-wrap items-end gap-2 rounded-2xl border border-slate-200 bg-white/80 shadow-sm p-3"
     >
       <div>
         <label className="mb-1 block text-xs text-neutral-500">Nama siklus</label>
@@ -19,7 +19,7 @@ export function CreateCycleForm() {
           name="name"
           placeholder="Q3 2026"
           required
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+          className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
         />
       </div>
       <div>
@@ -27,7 +27,7 @@ export function CreateCycleForm() {
         <input
           name="start_date"
           type="date"
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+          className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
         />
       </div>
       <div>
@@ -35,13 +35,13 @@ export function CreateCycleForm() {
         <input
           name="end_date"
           type="date"
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+          className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-rose-600/15 transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
       >
         {pending ? "Menyimpan..." : "Buat siklus"}
       </button>
