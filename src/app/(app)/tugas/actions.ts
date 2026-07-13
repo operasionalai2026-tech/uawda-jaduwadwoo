@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionState = { error: string | null };
@@ -47,6 +48,76 @@ export async function createTaskFromThread(
 
   if (error) return { error: error.message };
   revalidatePath(`/forum/${threadId}`);
+  revalidatePath("/tugas");
+  return { error: null };
+}
+
+export async function createProject(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const name = String(formData.get("name"));
+  const description = String(formData.get("description") ?? "") || null;
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .insert({ name, description, created_by: user.id })
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+  revalidatePath("/tugas/proyek");
+  redirect(`/tugas/proyek/${project.id}`);
+}
+
+export async function createTaskForProject(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const projectId = String(formData.get("project_id"));
+  const assigneeId = String(formData.get("assignee_id"));
+  const cycleId = String(formData.get("cycle_id"));
+  const pointCatalogId = String(formData.get("point_catalog_id"));
+  const title = String(formData.get("title"));
+  const description = String(formData.get("description") ?? "") || null;
+  const dueDate = String(formData.get("due_date"));
+
+  const { data: assigneeProfile, error: profileError } = await supabase
+    .from("profiles")
+    .select("division_id")
+    .eq("id", assigneeId)
+    .single();
+
+  if (profileError || !assigneeProfile?.division_id) {
+    return { error: "Karyawan yang dipilih belum punya divisi." };
+  }
+
+  const { error } = await supabase.from("kpi_tasks").insert({
+    project_id: projectId,
+    cycle_id: cycleId,
+    division_id: assigneeProfile.division_id,
+    point_catalog_id: pointCatalogId,
+    title,
+    description,
+    assignee_id: assigneeId,
+    assigned_by: user.id,
+    due_date: dueDate,
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath(`/tugas/proyek/${projectId}`);
   revalidatePath("/tugas");
   return { error: null };
 }

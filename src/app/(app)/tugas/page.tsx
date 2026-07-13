@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 import { TaskProgressButton } from "./TaskProgressButton";
 import { TaskReviewForm } from "./TaskReviewForm";
-import { Target, Settings, Clock, Award, MessageSquare } from "lucide-react";
+import { Target, Settings, Clock, Award, MessageSquare, FolderKanban } from "lucide-react";
 
 const STATUS_LABEL: Record<string, string> = {
   assigned: "Ditugaskan",
@@ -37,7 +37,7 @@ export default async function TugasPage() {
       supabase
         .from("kpi_tasks")
         .select(
-          "id, title, description, status, due_date, cycle_id, point_catalog_id, thread_id, rejection_reason",
+          "id, title, description, status, due_date, cycle_id, point_catalog_id, thread_id, project_id, rejection_reason",
         )
         .eq("assignee_id", user.id)
         .order("due_date", { ascending: true }),
@@ -96,15 +96,24 @@ export default async function TugasPage() {
             Task bernilai poin yang di-assign dari diskusi Forum, jadi komponen KPI individu karyawan.
           </p>
         </div>
-        {canManageCatalog && (
+        <div className="flex items-center gap-2">
           <Link
-            href="/tugas/katalog-poin"
+            href="/tugas/proyek"
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
           >
-            <Settings className="h-4 w-4" />
-            <span>Kelola Katalog Poin</span>
+            <FolderKanban className="h-4 w-4" />
+            <span>Proyek</span>
           </Link>
-        )}
+          {canManageCatalog && (
+            <Link
+              href="/tugas/katalog-poin"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Kelola Katalog Poin</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Poin saya cycle aktif */}
@@ -238,13 +247,23 @@ export default async function TugasPage() {
                           Alasan ditolak: {task.rejection_reason}
                         </p>
                       )}
-                      <Link
-                        href={`/forum/${task.thread_id}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline mt-1"
-                      >
-                        <MessageSquare className="h-3 w-3" />
-                        Lihat diskusi asal
-                      </Link>
+                      {task.thread_id ? (
+                        <Link
+                          href={`/forum/${task.thread_id}`}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline mt-1"
+                        >
+                          <MessageSquare className="h-3 w-3" />
+                          Lihat diskusi asal
+                        </Link>
+                      ) : task.project_id ? (
+                        <Link
+                          href={`/tugas/proyek/${task.project_id}`}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline mt-1"
+                        >
+                          <FolderKanban className="h-3 w-3" />
+                          Lihat proyek asal
+                        </Link>
+                      ) : null}
                     </div>
                     <TaskProgressButton taskId={task.id} status={task.status} />
                   </div>
