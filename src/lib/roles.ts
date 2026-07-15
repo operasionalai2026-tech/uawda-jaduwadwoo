@@ -9,6 +9,6 @@ export type AppRole = "superadmin" | "admin" | "leader" | "staff";
 export const ROLE_LABEL: Record<AppRole, string> = {
   superadmin: "Owner",
   admin: "Management",
-  leader: "Leader Divisi",
+  leader: "Lead Team",
   staff: "Staff",
 };

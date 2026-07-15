@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
 
 export type ActionState = { error: string | null };
 
@@ -10,24 +11,30 @@ export async function createMeeting(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return { error: "Not authenticated" };
+  const supabase = await createClient();
 
-  const visibility = String(formData.get("visibility") ?? "public") === "private" ? "private" : "public";
-  const divisionIds = formData.getAll("division_ids").map(String).filter(Boolean);
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return { error: "Judul rapat wajib diisi." };
 
-  if (visibility === "private" && divisionIds.length === 0) {
-    return { error: "Pilih minimal satu divisi untuk rapat privat." };
+  // Type rapat: Internal Divisi = privat ke satu divisi; Global = publik.
+  const meetingType = String(formData.get("meeting_type") ?? "global");
+  const isInternal = meetingType === "internal";
+  // Divisi untuk rapat internal: pakai divisi pembuat, atau yang dipilih
+  // (untuk Management/Owner yang tidak punya divisi sendiri).
+  const chosenDivision = String(formData.get("division_id") ?? "") || null;
+  const internalDivision = user.divisionId ?? chosenDivision;
+
+  if (isInternal && !internalDivision) {
+    return { error: "Pilih divisi untuk rapat Internal." };
   }
 
   const { data: meeting, error } = await supabase
     .from("meetings")
     .insert({
-      title: String(formData.get("title")),
-      visibility,
+      title,
+      visibility: isInternal ? "private" : "public",
       scheduled_at: String(formData.get("scheduled_at")),
       location: String(formData.get("location") ?? "") || null,
       agenda: String(formData.get("agenda") ?? "") || null,
@@ -38,10 +45,10 @@ export async function createMeeting(
 
   if (error) return { error: error.message };
 
-  if (visibility === "private") {
+  if (isInternal && internalDivision) {
     const { error: divisionError } = await supabase
       .from("meeting_divisions")
-      .insert(divisionIds.map((division_id) => ({ meeting_id: meeting.id, division_id })));
+      .insert({ meeting_id: meeting.id, division_id: internalDivision });
     if (divisionError) return { error: divisionError.message };
   }
 

@@ -1,20 +1,20 @@
--- Seed: 10 divisi awal.
---
--- ⚠️ BELUM DIKONFIRMASI ke pemilik bisnis: apakah "Affiliator" dan
--- "Affiliator TikTok" adalah dua divisi yang benar-benar terpisah (mis.
--- Affiliator = marketplace lain seperti Shopee), atau perlu rename. Nama di
--- bawah ini dipakai apa adanya dari notebook sumber — update baris terkait
--- lalu re-run sebelum dianggap final.
+-- Seed: 15 divisi (sinkron dengan daftar final dari pemilik bisnis, Jul 2026).
+-- "Affiliator" lama sudah dihapus dari daftar — jangan ditambahkan lagi.
 
 insert into divisions (name, category) values
   ('IT', 'Internal'),
   ('Purchasing', 'Internal'),
-  ('Affiliator', 'Marketplace'),           -- TODO: konfirmasi nama (lihat catatan di atas)
+  ('Accounting', 'Internal'),
   ('Marketing Shopee', 'Marketplace'),
   ('Marketing TikTok', 'Marketplace'),
-  ('Affiliator TikTok', 'Marketplace'),    -- TODO: konfirmasi nama (lihat catatan di atas)
+  ('Affiliator TikTok', 'Marketplace'),
   ('Inbound', 'Gudang'),
   ('Restock', 'Gudang'),
   ('Operasional', 'Gudang'),
-  ('Customer Service', 'Support')
+  ('Customer Service', 'Support'),
+  ('Admin Cs', 'Support'),
+  ('Haven Office', 'Haven'),
+  ('Haven Produksi', 'Haven'),
+  ('Design', 'Kreatif'),
+  ('Konten / Live', 'Kreatif')
 on conflict (name) do nothing;
