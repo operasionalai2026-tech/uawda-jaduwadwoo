@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { THREAD_CATEGORIES, type ThreadCategory } from "@/lib/pm";
 
 export type ActionState = { error: string | null };
 
@@ -27,41 +29,46 @@ export async function createThread(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return { error: "Not authenticated" };
+  const supabase = await createClient();
 
-  const categoryId = String(formData.get("category_id"));
-  const title = String(formData.get("title"));
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return { error: "Judul thread wajib diisi." };
+
+  const catRaw = String(formData.get("topic_category") ?? "idea");
+  const topicCategory: ThreadCategory = (THREAD_CATEGORIES as string[]).includes(catRaw)
+    ? (catRaw as ThreadCategory)
+    : "idea";
   const content = String(formData.get("content") ?? "");
-  const visibility = String(formData.get("visibility") ?? "public") === "private" ? "private" : "public";
-  const divisionIds = formData.getAll("division_ids").map(String).filter(Boolean);
 
-  if (visibility === "private" && divisionIds.length === 0) {
-    return { error: "Pilih minimal satu divisi untuk thread privat." };
+  // Type Thread: Internal = privat ke divisi pembuat; Global = publik.
+  const threadType = String(formData.get("thread_type") ?? "global");
+  const isInternal = threadType === "internal";
+  const visibility = isInternal ? "private" : "public";
+
+  if (isInternal && !user.divisionId) {
+    return { error: "Akun Anda belum punya divisi, jadi tidak bisa membuat thread Internal." };
   }
 
   const { data: thread, error } = await supabase
     .from("forum_threads")
-    .insert({ category_id: categoryId, title, created_by: user.id, visibility })
+    .insert({ title, topic_category: topicCategory, created_by: user.id, visibility })
     .select("id")
     .single();
 
   if (error) return { error: error.message };
 
-  if (visibility === "private") {
+  // Thread internal otomatis hanya terlihat divisi pembuat.
+  if (isInternal && user.divisionId) {
     const { error: divisionError } = await supabase
       .from("forum_thread_divisions")
-      .insert(divisionIds.map((division_id) => ({ thread_id: thread.id, division_id })));
+      .insert({ thread_id: thread.id, division_id: user.divisionId });
     if (divisionError) return { error: divisionError.message };
   }
 
   if (content.trim()) {
-    await supabase
-      .from("forum_posts")
-      .insert({ thread_id: thread.id, author_id: user.id, content });
+    await supabase.from("forum_posts").insert({ thread_id: thread.id, author_id: user.id, content });
   }
 
   revalidatePath("/forum");

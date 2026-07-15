@@ -25,7 +25,7 @@ const supabase = createClient(
 const DIVISIONS = [
   { name: "IT", category: "Internal" },
   { name: "Purchasing", category: "Internal" },
-  { name: "Affiliator", category: "Marketplace" },
+  { name: "Accounting", category: "Internal" },
   { name: "Marketing Shopee", category: "Marketplace" },
   { name: "Marketing TikTok", category: "Marketplace" },
   { name: "Affiliator TikTok", category: "Marketplace" },
@@ -33,6 +33,11 @@ const DIVISIONS = [
   { name: "Restock", category: "Gudang" },
   { name: "Operasional", category: "Gudang" },
   { name: "Customer Service", category: "Support" },
+  { name: "Admin Cs", category: "Support" },
+  { name: "Haven Office", category: "Haven" },
+  { name: "Haven Produksi", category: "Haven" },
+  { name: "Design", category: "Kreatif" },
+  { name: "Konten / Live", category: "Kreatif" },
 ];
 
 async function seedDivisions() {

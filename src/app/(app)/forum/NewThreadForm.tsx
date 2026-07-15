@@ -1,114 +1,68 @@
 "use client";
 
-import { useState } from "react";
 import { useActionState } from "react";
 import { createThread, type ActionState } from "./actions";
+import { THREAD_CATEGORIES, THREAD_TYPES, THREAD_CATEGORY_LABEL, THREAD_TYPE_LABEL } from "@/lib/pm";
 
 const initialState: ActionState = { error: null };
 
-export function NewThreadForm({
-  categories,
-  divisions,
-  canCreatePrivate,
-}: {
-  categories: { id: string; name: string }[];
-  divisions: { id: string; name: string }[];
-  canCreatePrivate: boolean;
-}) {
+const inputCls =
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10";
+const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
+
+// Buat thread: Kategori (Idea/Improvement/Issue) + Type (Internal/Global) +
+// Judul + Deskripsi.
+export function NewThreadForm() {
   const [state, formAction, pending] = useActionState(createThread, initialState);
-  const [visibility, setVisibility] = useState<"public" | "private">("public");
 
   return (
-    <form
-      action={formAction}
-      className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 shadow-sm p-4"
-    >
-      <p className="text-sm font-medium">Buat thread baru</p>
-      <div className="flex flex-wrap gap-2">
-        <select
-          name="category_id"
-          required
-          className="rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
-        >
-          <option value="">Kategori&hellip;</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <input
-          name="title"
-          placeholder="Judul thread"
-          required
-          className="flex-1 min-w-48 rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
-        />
-      </div>
-      <textarea
-        name="content"
-        placeholder="Isi pesan pertama (opsional)"
-        rows={2}
-        className="w-full rounded-xl border border-slate-200 bg-white shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 px-2 py-1.5 text-sm"
-      />
-
-      {canCreatePrivate && (
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 shadow-sm p-3">
-          <div className="flex items-center gap-4 text-sm">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="radio"
-                name="visibility"
-                value="public"
-                checked={visibility === "public"}
-                onChange={() => setVisibility("public")}
-              />
-              Publik (semua orang bisa lihat)
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input
-                type="radio"
-                name="visibility"
-                value="private"
-                checked={visibility === "private"}
-                onChange={() => setVisibility("private")}
-              />
-              Privat (hanya divisi terpilih)
-            </label>
-          </div>
-
-          {visibility === "private" && (
-            <div className="space-y-1">
-              <p className="text-xs text-neutral-500">
-                Pilih satu atau lebih divisi yang boleh melihat thread ini. Owner tetap bisa
-                melihat semua thread privat.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {divisions.map((d) => (
-                  <label
-                    key={d.id}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white shadow-sm px-2 py-1 text-xs"
-                  >
-                    <input type="checkbox" name="division_ids" value={d.id} />
-                    {d.name}
-                  </label>
-                ))}
-                {divisions.length === 0 && (
-                  <span className="text-xs text-neutral-400">Belum ada divisi terdaftar.</span>
-                )}
-              </div>
-            </div>
-          )}
+    <form action={formAction} className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className={labelCls}>Kategori Thread</label>
+          <select name="topic_category" className={inputCls} defaultValue="idea">
+            {THREAD_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {THREAD_CATEGORY_LABEL[c]}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+        <div>
+          <label className={labelCls}>Type Thread</label>
+          <select name="thread_type" className={inputCls} defaultValue="global">
+            {THREAD_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {THREAD_TYPE_LABEL[t]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className={labelCls}>Judul Thread *</label>
+        <input name="title" required placeholder="Judul diskusi..." className={inputCls} />
+      </div>
+
+      <div>
+        <label className={labelCls}>Deskripsi</label>
+        <textarea name="content" rows={3} placeholder="Jelaskan idea / masalah Anda..." className={inputCls} />
+      </div>
+
+      <p className="text-xs text-slate-400">
+        Thread <b>Internal Divisi</b> hanya terlihat oleh divisi Anda. Thread <b>Global</b> terlihat semua tim.
+      </p>
+
+      {state.error && <p className="text-sm text-rose-600">{state.error}</p>}
 
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-rose-600/15 transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+        className="rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-rose-600/15 transition-all hover:scale-[1.02] hover:opacity-95 active:scale-[0.98] disabled:opacity-50"
       >
-        {pending ? "Membuat..." : "Buat thread"}
+        {pending ? "Membuat..." : "Buat Thread"}
       </button>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
     </form>
   );
 }

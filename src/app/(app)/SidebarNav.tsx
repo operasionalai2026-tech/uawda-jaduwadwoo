@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  BarChart3,
   ClipboardList,
   MessageSquare,
   CalendarDays,
@@ -37,19 +36,20 @@ export function SidebarNav({ isAdminOrSuperadmin, isLeader }: SidebarNavProps) {
 
   const links: { href: string; label: string; icon: typeof LayoutDashboard; color: NavColor }[] = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, color: "blue" },
-    { href: "/kpi", label: "KPI Divisi", icon: BarChart3, color: "violet" },
-    { href: "/evaluasi", label: "Evaluasi", icon: ClipboardList, color: "emerald" },
     { href: "/tugas", label: "Tugas & Poin", icon: Target, color: "amber" },
+    { href: "/evaluasi", label: "Evaluasi & Retro", icon: ClipboardList, color: "emerald" },
     { href: "/forum", label: "Forum Diskusi", icon: MessageSquare, color: "rose" },
     { href: "/meeting", label: "Rapat & Notulen", icon: CalendarDays, color: "indigo" },
   ];
 
+  // Team Divisi: Lead Team melihat divisinya sendiri, Management/Owner semua divisi.
+  if (isAdminOrSuperadmin || isLeader) {
+    links.push({ href: "/pengaturan/karyawan", label: "Team Divisi", icon: Users2, color: "violet" });
+  }
+
+  // Pengaturan (Divisi CRUD & konfigurasi) khusus Management/Owner.
   if (isAdminOrSuperadmin) {
     links.push({ href: "/pengaturan", label: "Pengaturan", icon: Settings, color: "slate" });
-  } else if (isLeader) {
-    // Leader Divisi only gets the Staff sub-page, not the full Pengaturan
-    // hub (Divisi CRUD & company-wide Role Tree stay Management/Owner-only).
-    links.push({ href: "/pengaturan/karyawan", label: "Staff Divisi", icon: Users2, color: "slate" });
   }
 
   return (

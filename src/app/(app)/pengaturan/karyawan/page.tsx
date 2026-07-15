@@ -71,18 +71,18 @@ export default async function KaryawanPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-rose-700 bg-clip-text text-transparent">
-              Karyawan &amp; User
+              Team Divisi
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-500 ml-10">
             {isLeader
-              ? "Kelola Staff di divisi Anda -- tambah Staff baru, ubah jabatan, dan status kerja."
-              : "Kelola profil divisi, jabatan, dan hak akses operasional seluruh karyawan."}
+              ? "Kelola anggota tim di divisi Anda -- tambah anggota baru, ubah jabatan, dan status kerja."
+              : "Kelola anggota tim seluruh divisi: profil, jabatan, dan hak akses."}
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 border border-blue-100 text-xs font-semibold text-blue-700 sm:ml-10">
           <Users2 className="h-4 w-4" />
-          <span>Total: {users.length} {isLeader ? "Staff Divisi Anda" : "Karyawan"}</span>
+          <span>Total: {users.length} {isLeader ? "Anggota Divisi Anda" : "Anggota Tim"}</span>
         </div>
       </div>
 
