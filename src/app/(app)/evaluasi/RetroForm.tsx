@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createRetro, type ActionState } from "./actions";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { AppRole } from "@/lib/roles";
 
 type Option = { id: string; name: string };
@@ -43,12 +43,7 @@ export function RetroForm({
 
   return (
     <form action={formAction} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-800">Buat Evaluasi / Retro</h3>
-        <button type="button" onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+      <h3 className="text-sm font-bold text-slate-800">Buat Evaluasi / Retro</h3>
 
       <div>
         <label className={labelCls}>Judul Evaluasi *</label>

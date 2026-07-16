@@ -42,13 +42,17 @@ export async function createThread(
     : "idea";
   const content = String(formData.get("content") ?? "");
 
-  // Type Thread: Internal = privat ke divisi pembuat; Global = publik.
+  // Type Thread: Internal = privat ke divisi yang dipilih (default divisi
+  // pembuat); Global = publik.
   const threadType = String(formData.get("thread_type") ?? "global");
   const isInternal = threadType === "internal";
   const visibility = isInternal ? "private" : "public";
 
-  if (isInternal && !user.divisionId) {
-    return { error: "Akun Anda belum punya divisi, jadi tidak bisa membuat thread Internal." };
+  const chosenDivision = String(formData.get("division_id") ?? "") || null;
+  const internalDivision = chosenDivision ?? user.divisionId;
+
+  if (isInternal && !internalDivision) {
+    return { error: "Pilih divisi untuk thread Internal." };
   }
 
   const { data: thread, error } = await supabase
@@ -59,11 +63,11 @@ export async function createThread(
 
   if (error) return { error: error.message };
 
-  // Thread internal otomatis hanya terlihat divisi pembuat.
-  if (isInternal && user.divisionId) {
+  // Thread internal hanya terlihat divisi yang dipilih.
+  if (isInternal && internalDivision) {
     const { error: divisionError } = await supabase
       .from("forum_thread_divisions")
-      .insert({ thread_id: thread.id, division_id: user.divisionId });
+      .insert({ thread_id: thread.id, division_id: internalDivision });
     if (divisionError) return { error: divisionError.message };
   }
 

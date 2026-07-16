@@ -21,10 +21,10 @@ export async function createMeeting(
   // Type rapat: Internal Divisi = privat ke satu divisi; Global = publik.
   const meetingType = String(formData.get("meeting_type") ?? "global");
   const isInternal = meetingType === "internal";
-  // Divisi untuk rapat internal: pakai divisi pembuat, atau yang dipilih
-  // (untuk Management/Owner yang tidak punya divisi sendiri).
+  // Divisi untuk rapat internal: pakai yang dipilih di form; fallback ke
+  // divisi pembuat kalau tidak memilih.
   const chosenDivision = String(formData.get("division_id") ?? "") || null;
-  const internalDivision = user.divisionId ?? chosenDivision;
+  const internalDivision = chosenDivision ?? user.divisionId;
 
   if (isInternal && !internalDivision) {
     return { error: "Pilih divisi untuk rapat Internal." };

@@ -9,13 +9,13 @@ const inputCls =
 const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
 
 // Create Rapat: judul, tanggal, lokasi/link, deskripsi, type rapat.
-// Untuk user tanpa divisi (Management/Owner), rapat Internal butuh pilih divisi.
+// Rapat Internal memunculkan pilihan divisi tujuan (default: divisi pembuat).
 export function NewMeetingForm({
   divisions,
-  userHasDivision,
+  userDivisionId,
 }: {
   divisions: { id: string; name: string }[];
-  userHasDivision: boolean;
+  userDivisionId: string | null;
 }) {
   const [state, formAction, pending] = useActionState(createMeeting, initialState);
   const [type, setType] = useState<"internal" | "global">("global");
@@ -56,10 +56,10 @@ export function NewMeetingForm({
             <option value="internal">Internal Divisi</option>
           </select>
         </div>
-        {type === "internal" && !userHasDivision && (
+        {type === "internal" && (
           <div>
             <label className={labelCls}>Divisi *</label>
-            <select name="division_id" className={inputCls} defaultValue="">
+            <select name="division_id" className={inputCls} defaultValue={userDivisionId ?? ""}>
               <option value="">— Pilih divisi —</option>
               {divisions.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>

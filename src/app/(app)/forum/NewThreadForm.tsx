@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { createThread, type ActionState } from "./actions";
 import { THREAD_CATEGORIES, THREAD_TYPES, THREAD_CATEGORY_LABEL, THREAD_TYPE_LABEL } from "@/lib/pm";
 
@@ -11,9 +11,17 @@ const inputCls =
 const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
 
 // Buat thread: Kategori (Idea/Improvement/Issue) + Type (Internal/Global) +
-// Judul + Deskripsi.
-export function NewThreadForm() {
+// Judul + Deskripsi. Type Internal memunculkan pilihan divisi tujuan
+// (default: divisi pembuat sendiri).
+export function NewThreadForm({
+  divisions,
+  userDivisionId,
+}: {
+  divisions: { id: string; name: string }[];
+  userDivisionId: string | null;
+}) {
   const [state, formAction, pending] = useActionState(createThread, initialState);
+  const [type, setType] = useState<"internal" | "global">("global");
 
   return (
     <form action={formAction} className="space-y-4">
@@ -30,7 +38,12 @@ export function NewThreadForm() {
         </div>
         <div>
           <label className={labelCls}>Type Thread</label>
-          <select name="thread_type" className={inputCls} defaultValue="global">
+          <select
+            name="thread_type"
+            className={inputCls}
+            value={type}
+            onChange={(e) => setType(e.target.value as "internal" | "global")}
+          >
             {THREAD_TYPES.map((t) => (
               <option key={t} value={t}>
                 {THREAD_TYPE_LABEL[t]}
@@ -39,6 +52,18 @@ export function NewThreadForm() {
           </select>
         </div>
       </div>
+
+      {type === "internal" && (
+        <div>
+          <label className={labelCls}>Divisi *</label>
+          <select name="division_id" className={inputCls} defaultValue={userDivisionId ?? ""}>
+            <option value="">— Pilih divisi —</option>
+            {divisions.map((d) => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className={labelCls}>Judul Thread *</label>
@@ -51,7 +76,7 @@ export function NewThreadForm() {
       </div>
 
       <p className="text-xs text-slate-400">
-        Thread <b>Internal Divisi</b> hanya terlihat oleh divisi Anda. Thread <b>Global</b> terlihat semua tim.
+        Thread <b>Internal Divisi</b> hanya terlihat oleh divisi yang dipilih. Thread <b>Global</b> terlihat semua tim.
       </p>
 
       {state.error && <p className="text-sm text-rose-600">{state.error}</p>}

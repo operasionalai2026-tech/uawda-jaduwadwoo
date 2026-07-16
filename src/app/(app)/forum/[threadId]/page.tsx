@@ -54,7 +54,13 @@ export default async function ThreadPage({
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">
+        <Link
+          href="/forum"
+          className="text-xs font-semibold text-blue-600 hover:underline"
+        >
+          &larr; Kembali ke Forum Diskusi
+        </Link>
+        <h1 className="mt-2 text-xl font-semibold">
           {thread.title}
           {thread.is_decision && (
             <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700 align-middle">

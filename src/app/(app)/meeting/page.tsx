@@ -69,7 +69,7 @@ export default async function MeetingPage({ searchParams }: { searchParams: Sear
             <Plus className="h-4.5 w-4.5 text-blue-600" />
             <span>Jadwalkan Rapat Baru</span>
           </h2>
-          <NewMeetingForm divisions={divisions ?? []} userHasDivision={!!user?.divisionId} />
+          <NewMeetingForm divisions={divisions ?? []} userDivisionId={user?.divisionId ?? null} />
         </section>
       )}
 
