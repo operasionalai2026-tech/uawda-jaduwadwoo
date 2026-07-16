@@ -56,6 +56,24 @@ export async function createMeeting(
   redirect(`/meeting/${meeting.id}`);
 }
 
+// Hapus rapat (Owner/Management/Lead) -- mis. rapat yang sudah selesai atau
+// dibatalkan. Attendee, notulen, keputusan, action item, dan rekaman ikut
+// terhapus (cascade).
+export async function deleteMeeting(meetingId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not authenticated");
+  if (user.role !== "superadmin" && user.role !== "admin" && user.role !== "leader") {
+    throw new Error("Hanya Owner, Management, atau Lead yang dapat menghapus rapat.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("meetings").delete().eq("id", meetingId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/meeting");
+  redirect("/meeting");
+}
+
 export async function rsvp(meetingId: string, status: "yes" | "no") {
   const supabase = await createClient();
   const {

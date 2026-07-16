@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { deleteThread } from "../actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { PostForm } from "./PostForm";
 import Link from "next/link";
 import { Lock } from "lucide-react";
@@ -10,6 +13,9 @@ export default async function ThreadPage({
 }) {
   const { threadId } = await params;
   const supabase = await createClient();
+  const user = await getCurrentUser();
+  const canDelete =
+    user?.role === "superadmin" || user?.role === "admin" || user?.role === "leader";
 
   // Ambil thread dulu -- RLS akan mengembalikan null kalau thread ini privat
   // dan divisi user tidak di-include (kecuali dia pembuatnya atau Owner).
@@ -54,12 +60,21 @@ export default async function ThreadPage({
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link
-          href="/forum"
-          className="text-xs font-semibold text-blue-600 hover:underline"
-        >
-          &larr; Kembali ke Forum Diskusi
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/forum"
+            className="text-xs font-semibold text-blue-600 hover:underline"
+          >
+            &larr; Kembali ke Forum Diskusi
+          </Link>
+          {canDelete && (
+            <ConfirmDeleteButton
+              action={deleteThread.bind(null, threadId)}
+              label="Hapus Thread"
+              confirmMessage={`Hapus thread "${thread.title}" beserta seluruh balasannya? Tindakan ini tidak bisa dibatalkan.`}
+            />
+          )}
+        </div>
         <h1 className="mt-2 text-xl font-semibold">
           {thread.title}
           {thread.is_decision && (

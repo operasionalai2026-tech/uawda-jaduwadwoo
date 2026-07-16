@@ -79,6 +79,23 @@ export async function createThread(
   redirect(`/forum/${thread.id}`);
 }
 
+// Hapus thread (Owner/Management/Lead). Post & mapping divisi ikut terhapus
+// (cascade); keputusan yang lahir dari thread tetap ada (thread_id di-null-kan).
+export async function deleteThread(threadId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not authenticated");
+  if (user.role !== "superadmin" && user.role !== "admin" && user.role !== "leader") {
+    throw new Error("Hanya Owner, Management, atau Lead yang dapat menghapus thread.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("forum_threads").delete().eq("id", threadId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/forum");
+  redirect("/forum");
+}
+
 export async function createPost(
   _prevState: ActionState,
   formData: FormData,

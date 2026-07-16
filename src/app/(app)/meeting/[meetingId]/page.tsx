@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { rsvp } from "../actions";
+import { rsvp, deleteMeeting } from "../actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { NotulenForm } from "./NotulenForm";
 import { DecisionForm } from "./DecisionForm";
 import { ActionItemForm } from "./ActionItemForm";
@@ -95,13 +96,20 @@ export default async function MeetingDetailPage({
   return (
     <div className="max-w-3xl space-y-8 pb-12">
       {/* Back to list */}
-      <div>
+      <div className="flex items-center justify-between gap-3">
         <Link
           href="/meeting"
           className="text-xs font-semibold text-blue-600 hover:underline"
         >
           &larr; Kembali ke daftar rapat
         </Link>
+        {canEditNotulen && (
+          <ConfirmDeleteButton
+            action={deleteMeeting.bind(null, meetingId)}
+            label="Hapus Rapat"
+            confirmMessage={`Hapus rapat "${meeting.title}" beserta notulen, keputusan, dan action item-nya? Tindakan ini tidak bisa dibatalkan.`}
+          />
+        )}
       </div>
 
       {/* Title block */}

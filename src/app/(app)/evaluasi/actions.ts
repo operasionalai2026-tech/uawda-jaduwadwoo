@@ -58,3 +58,20 @@ export async function createRetro(
   revalidatePath("/");
   return { error: null };
 }
+
+// Hapus evaluasi/retro (Owner/Management/Lead). RLS membatasi Lead hanya
+// untuk retro di divisinya sendiri.
+export async function deleteRetro(retroId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not authenticated");
+  if (user.role !== "superadmin" && user.role !== "admin" && user.role !== "leader") {
+    throw new Error("Hanya Owner, Management, atau Lead yang dapat menghapus evaluasi.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("retros").delete().eq("id", retroId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/evaluasi");
+  revalidatePath("/");
+}

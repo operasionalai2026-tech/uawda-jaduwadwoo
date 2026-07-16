@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { RetroForm } from "./RetroForm";
+import { deleteRetro } from "./actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { ClipboardCheck, User2, CalendarDays } from "lucide-react";
 
 type SearchParams = Promise<{ division?: string }>;
@@ -86,6 +88,12 @@ export default async function EvaluasiIndexPage({ searchParams }: { searchParams
                   )}
                 </p>
               </div>
+              {canCreate && (
+                <ConfirmDeleteButton
+                  action={deleteRetro.bind(null, r.id)}
+                  confirmMessage={`Hapus evaluasi "${r.title}"? Tindakan ini tidak bisa dibatalkan.`}
+                />
+              )}
             </div>
           </div>
         ))}
