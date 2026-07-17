@@ -3,6 +3,7 @@
 import { useState, useActionState } from "react";
 import { createThread, type ActionState } from "./actions";
 import { THREAD_CATEGORIES, THREAD_TYPES, THREAD_CATEGORY_LABEL, THREAD_TYPE_LABEL } from "@/lib/pm";
+import { DivisionMultiSelect } from "@/components/DivisionMultiSelect";
 
 const initialState: ActionState = { error: null };
 
@@ -10,15 +11,17 @@ const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10";
 const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
 
-// Buat thread: Kategori (Idea/Improvement/Issue) + Type (Internal/Global) +
-// Judul + Deskripsi. Type Internal memunculkan pilihan divisi tujuan
-// (default: divisi pembuat sendiri).
+// Buat thread: Kategori (Ide/Perbaikan/Masalah) + Tipe (Internal/Global) +
+// Judul + Deskripsi. Tipe Internal memunculkan pilihan divisi tujuan
+// (default: divisi pembuat). Management/Owner boleh memilih lebih dari satu.
 export function NewThreadForm({
   divisions,
   userDivisionId,
+  isManager,
 }: {
   divisions: { id: string; name: string }[];
   userDivisionId: string | null;
+  isManager: boolean;
 }) {
   const [state, formAction, pending] = useActionState(createThread, initialState);
   const [type, setType] = useState<"internal" | "global">("global");
@@ -37,7 +40,7 @@ export function NewThreadForm({
           </select>
         </div>
         <div>
-          <label className={labelCls}>Type Thread</label>
+          <label className={labelCls}>Tipe Thread</label>
           <select
             name="thread_type"
             className={inputCls}
@@ -53,7 +56,13 @@ export function NewThreadForm({
         </div>
       </div>
 
-      {type === "internal" && (
+      {type === "internal" && isManager && (
+        <div>
+          <label className={labelCls}>Divisi * (boleh lebih dari satu)</label>
+          <DivisionMultiSelect divisions={divisions} />
+        </div>
+      )}
+      {type === "internal" && !isManager && (
         <div>
           <label className={labelCls}>Divisi *</label>
           <select name="division_id" className={inputCls} defaultValue={userDivisionId ?? ""}>

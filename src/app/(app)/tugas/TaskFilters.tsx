@@ -61,7 +61,7 @@ export function TaskFilters({ showDivision, divisions }: { showDivision: boolean
         value={params.get("type") ?? ""}
         onChange={(e) => setParam("type", e.target.value)}
       >
-        <option value="">Semua Type</option>
+        <option value="">Semua Tipe</option>
         {TASK_TYPES.map((t) => (
           <option key={t} value={t}>
             {TYPE_LABEL[t]}

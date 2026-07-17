@@ -58,7 +58,11 @@ export default async function ForumPage({ searchParams }: { searchParams: Search
           <MessageSquare className="h-4.5 w-4.5 text-rose-600" />
           <span>Pengajuan Thread Baru</span>
         </h2>
-        <NewThreadForm divisions={divisions ?? []} userDivisionId={user?.divisionId ?? null} />
+        <NewThreadForm
+          divisions={divisions ?? []}
+          userDivisionId={user?.divisionId ?? null}
+          isManager={!!isManager}
+        />
       </section>
 
       {/* List */}

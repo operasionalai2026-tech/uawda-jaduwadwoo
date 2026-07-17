@@ -5,6 +5,7 @@ import { createTask, type ActionState } from "./actions";
 import { TASK_LEVELS, TASK_TYPES, LEVEL_LABEL, TYPE_LABEL, STATUS_LABEL } from "@/lib/pm";
 import { Plus, X } from "lucide-react";
 import type { AppRole } from "@/lib/roles";
+import { DivisionMultiSelect } from "@/components/DivisionMultiSelect";
 
 type Option = { id: string; name: string };
 
@@ -33,15 +34,19 @@ export function TaskForm({
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(createTask, initialState);
-  const [divisionId, setDivisionId] = useState<string>("");
+  const [divisionIds, setDivisionIds] = useState<string[]>([]);
+  const [taskType, setTaskType] = useState<string>("pengembangan");
 
   const isStaff = role === "staff";
   const isManager = role === "admin" || role === "superadmin";
+  // Management (admin) yang membuat tugas tipe "Fitur (Tugas Baru)" boleh
+  // memilih minta ACC Owner dulu — opsional, tidak wajib.
+  const showAccOption = role === "admin" && taskType === "fitur";
 
   // Assignee options: Lead melihat anggota divisinya (difilter server); Management
-  // memfilter berdasarkan divisi yang dipilih.
+  // memfilter berdasarkan gabungan divisi yang dipilih.
   const assigneeOptions = isManager
-    ? members.filter((m) => !divisionId || m.divisionId === divisionId)
+    ? members.filter((m) => divisionIds.length === 0 || (m.divisionId && divisionIds.includes(m.divisionId)))
     : members;
 
   if (!open) {
@@ -86,8 +91,13 @@ export function TaskForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className={labelCls}>Type Tugas</label>
-          <select name="type" className={inputCls} defaultValue="pengembangan">
+          <label className={labelCls}>Tipe Tugas</label>
+          <select
+            name="type"
+            className={inputCls}
+            value={taskType}
+            onChange={(e) => setTaskType(e.target.value)}
+          >
             {TASK_TYPES.map((t) => (
               <option key={t} value={t}>
                 {TYPE_LABEL[t]}
@@ -109,33 +119,30 @@ export function TaskForm({
 
       {isManager && (
         <div>
-          <label className={labelCls}>Divisi *</label>
-          <select
-            name="division_id"
-            required
-            className={inputCls}
-            value={divisionId}
-            onChange={(e) => setDivisionId(e.target.value)}
-          >
-            <option value="">— Pilih divisi —</option>
-            {divisions.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+          <label className={labelCls}>Divisi * (boleh lebih dari satu — tiap divisi dapat tugasnya sendiri)</label>
+          <DivisionMultiSelect divisions={divisions} onChange={setDivisionIds} />
         </div>
+      )}
+
+      {showAccOption && (
+        <label className="flex items-start gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+          <input type="checkbox" name="need_acc" value="1" className="mt-0.5" />
+          <span>
+            <b>Ajukan ACC ke Owner terlebih dahulu</b> (opsional). Jika dicentang, tugas masuk
+            sebagai <b>Ide</b> menunggu persetujuan Owner. Jika tidak, tugas langsung berjalan.
+          </span>
+        </label>
       )}
 
       {!isStaff && (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Start Date</label>
+              <label className={labelCls}>Tanggal Mulai</label>
               <input type="date" name="start_date" className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>End Date</label>
+              <label className={labelCls}>Tanggal Selesai</label>
               <input type="date" name="end_date" className={inputCls} />
             </div>
           </div>
@@ -152,7 +159,7 @@ export function TaskForm({
               </select>
             </div>
             <div>
-              <label className={labelCls}>Assignee</label>
+              <label className={labelCls}>Penanggung Jawab (PIC)</label>
               <select name="assignee_id" className={inputCls} defaultValue="">
                 <option value="">— Belum ditugaskan —</option>
                 {assigneeOptions.map((m) => (
@@ -168,7 +175,7 @@ export function TaskForm({
 
       {isStaff && (
         <p className="rounded-lg bg-violet-50 px-3 py-2 text-xs text-violet-700 border border-violet-100">
-          Tugas dari Staff masuk sebagai <b>Idea</b> dan menunggu persetujuan Lead Team divisi Anda.
+          Tugas dari Staff masuk sebagai <b>Ide</b> dan menunggu persetujuan Lead Team divisi Anda.
         </p>
       )}
 

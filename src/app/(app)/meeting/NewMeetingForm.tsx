@@ -2,20 +2,24 @@
 
 import { useState, useActionState } from "react";
 import { createMeeting, type ActionState } from "./actions";
+import { DivisionMultiSelect } from "@/components/DivisionMultiSelect";
 
 const initialState: ActionState = { error: null };
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10";
 const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
 
-// Create Rapat: judul, tanggal, lokasi/link, deskripsi, type rapat.
+// Buat Rapat: judul, tanggal, lokasi/link, deskripsi, tipe rapat.
 // Rapat Internal memunculkan pilihan divisi tujuan (default: divisi pembuat).
+// Management/Owner boleh memilih lebih dari satu divisi.
 export function NewMeetingForm({
   divisions,
   userDivisionId,
+  isManager,
 }: {
   divisions: { id: string; name: string }[];
   userDivisionId: string | null;
+  isManager: boolean;
 }) {
   const [state, formAction, pending] = useActionState(createMeeting, initialState);
   const [type, setType] = useState<"internal" | "global">("global");
@@ -45,7 +49,7 @@ export function NewMeetingForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className={labelCls}>Type Rapat</label>
+          <label className={labelCls}>Tipe Rapat</label>
           <select
             name="meeting_type"
             className={inputCls}
@@ -56,7 +60,7 @@ export function NewMeetingForm({
             <option value="internal">Internal Divisi</option>
           </select>
         </div>
-        {type === "internal" && (
+        {type === "internal" && !isManager && (
           <div>
             <label className={labelCls}>Divisi *</label>
             <select name="division_id" className={inputCls} defaultValue={userDivisionId ?? ""}>
@@ -68,6 +72,13 @@ export function NewMeetingForm({
           </div>
         )}
       </div>
+
+      {type === "internal" && isManager && (
+        <div>
+          <label className={labelCls}>Divisi * (boleh lebih dari satu)</label>
+          <DivisionMultiSelect divisions={divisions} />
+        </div>
+      )}
 
       {state.error && <p className="text-sm text-rose-600">{state.error}</p>}
 

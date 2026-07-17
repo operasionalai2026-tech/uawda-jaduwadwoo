@@ -34,7 +34,7 @@ export function ForumFilters({ showDivision, divisions }: { showDivision: boolea
         ))}
       </select>
       <select className={selectCls} value={params.get("type") ?? ""} onChange={(e) => setParam("type", e.target.value)}>
-        <option value="">Semua Type</option>
+        <option value="">Semua Tipe</option>
         {THREAD_TYPES.map((t) => (
           <option key={t} value={t}>{THREAD_TYPE_LABEL[t]}</option>
         ))}

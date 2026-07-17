@@ -48,11 +48,18 @@ export async function createThread(
   const isInternal = threadType === "internal";
   const visibility = isInternal ? "private" : "public";
 
-  const chosenDivision = String(formData.get("division_id") ?? "") || null;
-  const internalDivision = chosenDivision ?? user.divisionId;
+  // Divisi tujuan: Management/Owner boleh lebih dari satu (division_ids);
+  // role lain memakai satu pilihan (division_id) atau divisinya sendiri.
+  const multi = formData
+    .getAll("division_ids")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const single = String(formData.get("division_id") ?? "") || null;
+  const internalDivisions =
+    multi.length > 0 ? multi : single ? [single] : user.divisionId ? [user.divisionId] : [];
 
-  if (isInternal && !internalDivision) {
-    return { error: "Pilih divisi untuk thread Internal." };
+  if (isInternal && internalDivisions.length === 0) {
+    return { error: "Pilih minimal satu divisi untuk thread Internal." };
   }
 
   const { data: thread, error } = await supabase
@@ -63,11 +70,11 @@ export async function createThread(
 
   if (error) return { error: error.message };
 
-  // Thread internal hanya terlihat divisi yang dipilih.
-  if (isInternal && internalDivision) {
+  // Thread internal hanya terlihat divisi-divisi yang dipilih.
+  if (isInternal && internalDivisions.length > 0) {
     const { error: divisionError } = await supabase
       .from("forum_thread_divisions")
-      .insert({ thread_id: thread.id, division_id: internalDivision });
+      .insert(internalDivisions.map((divId) => ({ thread_id: thread.id, division_id: divId })));
     if (divisionError) return { error: divisionError.message };
   }
 

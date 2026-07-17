@@ -40,8 +40,14 @@ export async function createRetro(
       return { error: "Anggota yang dievaluasi harus dari divisi Anda." };
     }
   } else {
-    divisionId = String(formData.get("division_id") ?? "") || null;
-    if (!divisionId) return { error: "Divisi wajib dipilih." };
+    // Management/Owner: divisi evaluasi mengikuti divisi anggota yang dinilai
+    // (pemilih divisi di form hanya untuk menyaring daftar anggota).
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("division_id")
+      .eq("id", assigneeId)
+      .maybeSingle();
+    divisionId = prof?.division_id ?? null;
   }
 
   const { error } = await supabase.from("retros").insert({

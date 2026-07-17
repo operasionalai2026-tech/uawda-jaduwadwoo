@@ -4,6 +4,8 @@ import { useActionState, useState } from "react";
 import { createProject, type ActionState } from "../actions";
 import { TASK_LEVELS, TASK_TYPES, LEVEL_LABEL, TYPE_LABEL, STATUS_LABEL } from "@/lib/pm";
 import { FolderPlus, X } from "lucide-react";
+import type { AppRole } from "@/lib/roles";
+import { DivisionMultiSelect } from "@/components/DivisionMultiSelect";
 
 type Option = { id: string; name: string };
 
@@ -12,20 +14,30 @@ const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10";
 const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
 
-// Buat Proyek (Management/Owner): nama, deskripsi, start/end, divisi, type,
-// status, level, assignee.
+// Buat Proyek (Management/Owner): nama, deskripsi, tanggal, divisi (boleh
+// lebih dari satu — tiap divisi mendapat proyeknya sendiri), tipe, status,
+// level, PIC.
 export function ProjectForm({
+  role,
   divisions,
   members,
 }: {
+  role: AppRole;
   divisions: Option[];
   members: { id: string; name: string; divisionId: string | null }[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(createProject, initialState);
-  const [divisionId, setDivisionId] = useState<string>("");
+  const [divisionIds, setDivisionIds] = useState<string[]>([]);
+  const [projectType, setProjectType] = useState<string>("pengembangan");
 
-  const assigneeOptions = members.filter((m) => !divisionId || m.divisionId === divisionId);
+  // Management (admin) yang membuat proyek tipe "Fitur (Tugas Baru)" boleh
+  // memilih minta ACC Owner dulu — opsional.
+  const showAccOption = role === "admin" && projectType === "fitur";
+
+  const assigneeOptions = members.filter(
+    (m) => divisionIds.length === 0 || (m.divisionId && divisionIds.includes(m.divisionId)),
+  );
 
   if (!open) {
     return (
@@ -62,50 +74,41 @@ export function ProjectForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className={labelCls}>Start Date</label>
+          <label className={labelCls}>Tanggal Mulai</label>
           <input type="date" name="start_date" className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>End Date</label>
+          <label className={labelCls}>Tanggal Selesai</label>
           <input type="date" name="end_date" className={inputCls} />
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className={labelCls}>Divisi *</label>
-          <select
-            name="division_id"
-            required
-            className={inputCls}
-            value={divisionId}
-            onChange={(e) => setDivisionId(e.target.value)}
-          >
-            <option value="">— Pilih divisi —</option>
-            {divisions.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Assignee</label>
-          <select name="assignee_id" className={inputCls} defaultValue="">
-            <option value="">— Belum ditugaskan —</option>
-            {assigneeOptions.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <label className={labelCls}>Divisi * (boleh lebih dari satu — tiap divisi dapat proyeknya sendiri)</label>
+        <DivisionMultiSelect divisions={divisions} onChange={setDivisionIds} />
+      </div>
+
+      <div>
+        <label className={labelCls}>Penanggung Jawab (PIC)</label>
+        <select name="assignee_id" className={inputCls} defaultValue="">
+          <option value="">— Belum ditugaskan —</option>
+          {assigneeOptions.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
-          <label className={labelCls}>Type</label>
-          <select name="type" className={inputCls} defaultValue="pengembangan">
+          <label className={labelCls}>Tipe</label>
+          <select
+            name="type"
+            className={inputCls}
+            value={projectType}
+            onChange={(e) => setProjectType(e.target.value)}
+          >
             {TASK_TYPES.map((t) => (
               <option key={t} value={t}>
                 {TYPE_LABEL[t]}
@@ -134,6 +137,16 @@ export function ProjectForm({
           </select>
         </div>
       </div>
+
+      {showAccOption && (
+        <label className="flex items-start gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+          <input type="checkbox" name="need_acc" value="1" className="mt-0.5" />
+          <span>
+            <b>Ajukan ACC ke Owner terlebih dahulu</b> (opsional). Jika dicentang, proyek masuk
+            sebagai <b>Ide</b> menunggu persetujuan Owner. Jika tidak, proyek langsung berjalan.
+          </span>
+        </label>
+      )}
 
       {state.error && <p className="text-sm text-rose-600">{state.error}</p>}
 

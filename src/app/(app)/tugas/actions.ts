@@ -91,14 +91,50 @@ export async function createTask(
       base.assignee_id = assigneeId;
     }
   } else {
-    // Management / Owner
-    const divisionId = optionalString(formData.get("division_id"));
-    if (!divisionId) return { error: "Divisi wajib dipilih." };
-    base.division_id = divisionId;
-    base.status = asStatus(formData.get("status"), "todo");
+    // Management / Owner: boleh memilih lebih dari satu divisi — sistem
+    // membuat satu tugas per divisi terpilih.
+    const divisionIds = formData
+      .getAll("division_ids")
+      .map((v) => String(v).trim())
+      .filter(Boolean);
+    // Kompatibel dengan form lama yang mengirim satu division_id.
+    const single = optionalString(formData.get("division_id"));
+    if (divisionIds.length === 0 && single) divisionIds.push(single);
+    if (divisionIds.length === 0) return { error: "Pilih minimal satu divisi." };
+
+    // ACC Owner opsional: hanya Management (admin) & tipe "fitur". Jika minta
+    // ACC, tugas masuk sebagai Ide menunggu persetujuan Owner.
+    const needAcc = user.role === "admin" && type === "fitur" && formData.get("need_acc") === "1";
+    base.status = needAcc ? "idea" : asStatus(formData.get("status"), "todo");
     base.start_date = optionalString(formData.get("start_date"));
     base.end_date = optionalString(formData.get("end_date"));
-    base.assignee_id = optionalString(formData.get("assignee_id"));
+
+    // PIC hanya dipasang pada tugas di divisinya sendiri; salinan untuk
+    // divisi lain dibiarkan "Belum ditugaskan".
+    const assigneeId = optionalString(formData.get("assignee_id"));
+    let assigneeDivision: string | null = null;
+    if (assigneeId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("division_id")
+        .eq("id", assigneeId)
+        .maybeSingle();
+      assigneeDivision = prof?.division_id ?? null;
+    }
+
+    const rows = divisionIds.map((divId) => ({
+      ...base,
+      division_id: divId,
+      assignee_id: assigneeId && assigneeDivision === divId ? assigneeId : null,
+    }));
+
+    const { error } = await supabase.from("pm_tasks").insert(rows);
+    if (error) return { error: error.message };
+
+    revalidatePath("/tugas");
+    revalidatePath("/");
+    if (projectId) revalidatePath(`/tugas/proyek/${projectId}`);
+    return { error: null };
   }
 
   const { error } = await supabase.from("pm_tasks").insert(base);
@@ -172,30 +208,58 @@ export async function createProject(
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Nama proyek wajib diisi." };
-  const divisionId = optionalString(formData.get("division_id"));
-  if (!divisionId) return { error: "Divisi wajib dipilih." };
+
+  // Boleh lebih dari satu divisi — satu proyek dibuat per divisi terpilih.
+  const divisionIds = formData
+    .getAll("division_ids")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const single = optionalString(formData.get("division_id"));
+  if (divisionIds.length === 0 && single) divisionIds.push(single);
+  if (divisionIds.length === 0) return { error: "Pilih minimal satu divisi." };
+
+  const type = asType(formData.get("type"));
+  // ACC Owner opsional: hanya Management (admin) & tipe "fitur".
+  const needAcc = user.role === "admin" && type === "fitur" && formData.get("need_acc") === "1";
+  const status = needAcc ? ("idea" as TaskStatus) : asStatus(formData.get("status"), "todo");
 
   const supabase = await createClient();
-  const { data: project, error } = await supabase
+
+  // PIC hanya dipasang pada proyek di divisinya sendiri.
+  const assigneeId = optionalString(formData.get("assignee_id"));
+  let assigneeDivision: string | null = null;
+  if (assigneeId) {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("division_id")
+      .eq("id", assigneeId)
+      .maybeSingle();
+    assigneeDivision = prof?.division_id ?? null;
+  }
+
+  const rows = divisionIds.map((divId) => ({
+    name,
+    description: optionalString(formData.get("description")),
+    division_id: divId,
+    start_date: optionalString(formData.get("start_date")),
+    end_date: optionalString(formData.get("end_date")),
+    type,
+    status,
+    level: asLevel(formData.get("level")),
+    assignee_id: assigneeId && assigneeDivision === divId ? assigneeId : null,
+    created_by: user.id,
+  }));
+
+  const { data: projects, error } = await supabase
     .from("pm_projects")
-    .insert({
-      name,
-      description: optionalString(formData.get("description")),
-      division_id: divisionId,
-      start_date: optionalString(formData.get("start_date")),
-      end_date: optionalString(formData.get("end_date")),
-      type: asType(formData.get("type")),
-      status: asStatus(formData.get("status"), "todo"),
-      level: asLevel(formData.get("level")),
-      assignee_id: optionalString(formData.get("assignee_id")),
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
+    .insert(rows)
+    .select("id");
 
   if (error) return { error: error.message };
   revalidatePath("/tugas/proyek");
-  redirect(`/tugas/proyek/${project.id}`);
+  // Satu divisi -> langsung ke detail proyeknya; lebih dari satu -> ke daftar.
+  if (projects?.length === 1) redirect(`/tugas/proyek/${projects[0].id}`);
+  redirect("/tugas/proyek");
 }
 
 export async function updateProjectStatus(projectId: string, newStatus: TaskStatus) {

@@ -21,13 +21,18 @@ export async function createMeeting(
   // Type rapat: Internal Divisi = privat ke satu divisi; Global = publik.
   const meetingType = String(formData.get("meeting_type") ?? "global");
   const isInternal = meetingType === "internal";
-  // Divisi untuk rapat internal: pakai yang dipilih di form; fallback ke
-  // divisi pembuat kalau tidak memilih.
-  const chosenDivision = String(formData.get("division_id") ?? "") || null;
-  const internalDivision = chosenDivision ?? user.divisionId;
+  // Divisi untuk rapat internal: Management/Owner boleh lebih dari satu
+  // (division_ids); role lain memakai satu pilihan atau divisinya sendiri.
+  const multi = formData
+    .getAll("division_ids")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const single = String(formData.get("division_id") ?? "") || null;
+  const internalDivisions =
+    multi.length > 0 ? multi : single ? [single] : user.divisionId ? [user.divisionId] : [];
 
-  if (isInternal && !internalDivision) {
-    return { error: "Pilih divisi untuk rapat Internal." };
+  if (isInternal && internalDivisions.length === 0) {
+    return { error: "Pilih minimal satu divisi untuk rapat Internal." };
   }
 
   const { data: meeting, error } = await supabase
@@ -45,10 +50,10 @@ export async function createMeeting(
 
   if (error) return { error: error.message };
 
-  if (isInternal && internalDivision) {
+  if (isInternal && internalDivisions.length > 0) {
     const { error: divisionError } = await supabase
       .from("meeting_divisions")
-      .insert({ meeting_id: meeting.id, division_id: internalDivision });
+      .insert(internalDivisions.map((divId) => ({ meeting_id: meeting.id, division_id: divId })));
     if (divisionError) return { error: divisionError.message };
   }
 

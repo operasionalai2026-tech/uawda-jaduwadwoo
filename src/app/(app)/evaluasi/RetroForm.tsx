@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { createRetro, type ActionState } from "./actions";
 import { Plus } from "lucide-react";
 import type { AppRole } from "@/lib/roles";
+import { DivisionMultiSelect } from "@/components/DivisionMultiSelect";
 
 type Option = { id: string; name: string };
 
@@ -25,10 +26,13 @@ export function RetroForm({
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(createRetro, initialState);
-  const [divisionId, setDivisionId] = useState<string>("");
+  const [divisionIds, setDivisionIds] = useState<string[]>([]);
 
   const isManager = role === "admin" || role === "superadmin";
-  const assigneeOptions = isManager ? members.filter((m) => !divisionId || m.divisionId === divisionId) : members;
+  // Multi-pilih divisi menggabungkan daftar anggota dari semua divisi terpilih.
+  const assigneeOptions = isManager
+    ? members.filter((m) => divisionIds.length === 0 || (m.divisionId && divisionIds.includes(m.divisionId)))
+    : members;
 
   if (!open) {
     return (
@@ -52,13 +56,8 @@ export function RetroForm({
 
       {isManager && (
         <div>
-          <label className={labelCls}>Divisi *</label>
-          <select name="division_id" required className={inputCls} value={divisionId} onChange={(e) => setDivisionId(e.target.value)}>
-            <option value="">— Pilih divisi —</option>
-            {divisions.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
+          <label className={labelCls}>Divisi (boleh lebih dari satu — untuk menyaring daftar anggota)</label>
+          <DivisionMultiSelect divisions={divisions} onChange={setDivisionIds} />
         </div>
       )}
 

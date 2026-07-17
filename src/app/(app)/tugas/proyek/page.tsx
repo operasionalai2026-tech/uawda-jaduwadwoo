@@ -41,7 +41,9 @@ export default async function ProyekPage() {
             Kelompok kerja lintas divisi. Dibuat oleh Management/Owner, berisi tugas-tugas berpoin.
           </p>
         </div>
-        {canCreate && <ProjectForm divisions={divisions ?? []} members={members} />}
+        {canCreate && user && (
+          <ProjectForm role={user.role} divisions={divisions ?? []} members={members} />
+        )}
       </div>
 
       <div className="grid max-w-3xl gap-3">

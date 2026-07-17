@@ -110,12 +110,12 @@ export default async function DashboardPage() {
   }));
 
   const summaryCards = [
-    { label: "Total Task", value: summary.total, icon: ListTodo, tint: "from-blue-600 to-cyan-500" },
-    { label: "Completed", value: summary.completed, icon: CheckCircle2, tint: "from-emerald-600 to-teal-500" },
-    { label: "Created (7 hari)", value: summary.created, icon: ClipboardList, tint: "from-violet-600 to-purple-500" },
-    { label: "Updated (7 hari)", value: summary.updated, icon: Activity, tint: "from-indigo-600 to-blue-500" },
-    { label: "Due Soon", value: summary.dueSoon, icon: Clock, tint: "from-amber-500 to-orange-500" },
-    { label: "Cancel", value: summary.cancel, icon: Flame, tint: "from-rose-600 to-pink-500" },
+    { label: "Total Tugas", value: summary.total, icon: ListTodo, tint: "from-blue-600 to-cyan-500" },
+    { label: "Selesai", value: summary.completed, icon: CheckCircle2, tint: "from-emerald-600 to-teal-500" },
+    { label: "Dibuat (7 hari)", value: summary.created, icon: ClipboardList, tint: "from-violet-600 to-purple-500" },
+    { label: "Diperbarui (7 hari)", value: summary.updated, icon: Activity, tint: "from-indigo-600 to-blue-500" },
+    { label: "Segera Jatuh Tempo", value: summary.dueSoon, icon: Clock, tint: "from-amber-500 to-orange-500" },
+    { label: "Dibatalkan", value: summary.cancel, icon: Flame, tint: "from-rose-600 to-pink-500" },
   ];
 
   return (
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">KPI Divisi (Completion)</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">KPI Divisi (Penyelesaian)</span>
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md">
                 <CheckCircle2 className="h-5 w-5" />
               </span>

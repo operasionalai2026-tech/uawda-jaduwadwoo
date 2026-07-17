@@ -18,12 +18,12 @@ export const TASK_TYPES: TaskType[] = ["fitur", "pengembangan", "masalah"];
 export const TASK_LEVELS: TaskLevel[] = ["urgent", "medium", "low"];
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {
-  idea: "Idea",
-  todo: "TO DO",
-  in_progress: "In Progress",
-  in_review: "In Review",
-  done: "Done",
-  cancelled: "Cancel",
+  idea: "Ide",
+  todo: "Belum Dikerjakan",
+  in_progress: "Sedang Dikerjakan",
+  in_review: "Menunggu Review",
+  done: "Selesai",
+  cancelled: "Dibatalkan",
 };
 
 export const STATUS_COLOR: Record<TaskStatus, string> = {
@@ -36,7 +36,7 @@ export const STATUS_COLOR: Record<TaskStatus, string> = {
 };
 
 export const TYPE_LABEL: Record<TaskType, string> = {
-  fitur: "Fitur",
+  fitur: "Fitur (Tugas Baru)",
   pengembangan: "Pengembangan",
   masalah: "Masalah",
 };
@@ -48,9 +48,9 @@ export const TYPE_COLOR: Record<TaskType, string> = {
 };
 
 export const LEVEL_LABEL: Record<TaskLevel, string> = {
-  urgent: "Urgent",
-  medium: "Medium",
-  low: "Low",
+  urgent: "Mendesak",
+  medium: "Sedang",
+  low: "Rendah",
 };
 
 export const LEVEL_COLOR: Record<TaskLevel, string> = {
@@ -72,9 +72,9 @@ export const THREAD_CATEGORIES: ThreadCategory[] = ["idea", "improvement", "issu
 export const THREAD_TYPES: ThreadType[] = ["internal", "global"];
 
 export const THREAD_CATEGORY_LABEL: Record<ThreadCategory, string> = {
-  idea: "Idea",
-  improvement: "Improvement",
-  issue: "Issue",
+  idea: "Ide",
+  improvement: "Perbaikan",
+  issue: "Masalah",
 };
 
 export const THREAD_CATEGORY_COLOR: Record<ThreadCategory, string> = {
@@ -94,10 +94,10 @@ export const THREAD_TYPE_LABEL: Record<ThreadType, string> = {
 export type MeetingDisplayStatus = "done" | "in_progress" | "due_soon" | "cancelled";
 
 export const MEETING_STATUS_LABEL: Record<MeetingDisplayStatus, string> = {
-  done: "Done",
-  in_progress: "In Progress",
-  due_soon: "Due Soon",
-  cancelled: "Cancelled",
+  done: "Selesai",
+  in_progress: "Sedang Berlangsung",
+  due_soon: "Akan Datang",
+  cancelled: "Dibatalkan",
 };
 
 export const MEETING_STATUS_COLOR: Record<MeetingDisplayStatus, string> = {
