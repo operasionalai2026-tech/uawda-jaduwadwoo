@@ -227,9 +227,11 @@ async function runBackgroundPipeline(meetingId: string, totalChunks: number) {
     const hasGemini = !!process.env.GEMINI_API_KEY;
 
     if (hasGemini) {
-      // --- GOOGLE GEMINI 1.5 FLASH FREE PIPELINE ---
+      // --- GOOGLE GEMINI FLASH FREE PIPELINE ---
+      // gemini-1.5-flash sudah deprecated & ditolak untuk API key baru;
+      // gemini-2.5-flash adalah pengganti GA-nya di free tier.
       const base64Audio = finalBuffer.toString("base64");
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
       // Update status to 'summarizing'
       await supabase
@@ -305,7 +307,7 @@ Pastikan respons Anda HANYA berupa JSON valid tersebut tanpa teks pembuka atau p
       await supabase.from("transcripts").upsert({
         recording_id: recordingId,
         raw_text: transcriptText,
-        provider: "gemini-1.5-flash",
+        provider: "gemini-2.5-flash",
       }, { onConflict: "recording_id" });
 
     } else if (hasOpenAI && hasAnthropic) {
