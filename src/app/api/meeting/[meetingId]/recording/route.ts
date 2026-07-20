@@ -114,6 +114,13 @@ export async function POST(
         return NextResponse.json({ error: "Invalid totalChunks" }, { status: 400 });
       }
 
+      // Rekaman live selalu webm, tapi upload file rekaman lama bisa mp3/wav/
+      // dll -- mime diteruskan ke Gemini supaya audionya dikenali dengan benar.
+      const mimeType =
+        typeof body.mimeType === "string" && /^audio\/[\w.+-]+$/.test(body.mimeType)
+          ? body.mimeType
+          : "audio/webm";
+
       // 1. Initial insert/update record state to 'transcribing'
       const { data: existingRec } = await supabase
         .from("meeting_recordings")
@@ -135,7 +142,7 @@ export async function POST(
       }
 
       // 2. Launch AI processing in the background (Non-blocking response)
-      runBackgroundPipeline(meetingId, totalChunks);
+      runBackgroundPipeline(meetingId, totalChunks, mimeType);
 
       return NextResponse.json({ success: true, status: "transcribing" });
     } catch (e: any) {
@@ -149,7 +156,11 @@ export async function POST(
 // ---------------------------------------------------------------------------
 // BACKGROUND WORKER PIPELINE (Whisper -> Claude -> Fonnte)
 // ---------------------------------------------------------------------------
-async function runBackgroundPipeline(meetingId: string, totalChunks: number) {
+async function runBackgroundPipeline(
+  meetingId: string,
+  totalChunks: number,
+  mimeType: string = "audio/webm"
+) {
   const supabase = createAdminClient();
   let recordingId = "";
 
@@ -192,7 +203,7 @@ async function runBackgroundPipeline(meetingId: string, totalChunks: number) {
     const { error: finalUploadError } = await supabase.storage
         .from("meeting-recordings")
         .upload(finalPath, finalBuffer, {
-          contentType: "audio/webm",
+          contentType: mimeType,
           upsert: true,
         });
 
@@ -250,7 +261,7 @@ async function runBackgroundPipeline(meetingId: string, totalChunks: number) {
               parts: [
                 {
                   inline_data: {
-                    mime_type: "audio/webm",
+                    mime_type: mimeType,
                     data: base64Audio
                   }
                 },
@@ -314,7 +325,7 @@ Pastikan respons Anda HANYA berupa JSON valid tersebut tanpa teks pembuka atau p
       // --- REAL INTEGRATION ---
       // 1. Whisper transcription
       const whisperFormData = new FormData();
-      const file = new File([finalBuffer], "audio.webm", { type: "audio/webm" });
+      const file = new File([finalBuffer], "audio", { type: mimeType });
       whisperFormData.append("file", file);
       whisperFormData.append("model", "whisper-1");
       whisperFormData.append("language", "id");

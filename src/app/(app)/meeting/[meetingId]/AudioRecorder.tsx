@@ -2,21 +2,28 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Mic, Square, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Upload } from "lucide-react";
 
 interface AudioRecorderProps {
   meetingId: string;
 }
 
+// Batas file upload: base64 audio dikirim inline ke Gemini yang punya limit
+// request ~20MB, jadi file mentah harus jauh di bawah itu.
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+const UPLOAD_CHUNK_BYTES = 3 * 1024 * 1024; // di bawah limit body serverless Vercel (4.5MB)
+
 export function AudioRecorder({ meetingId }: AudioRecorderProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "recording" | "transcribing" | "summarizing" | "ready" | "failed">("idle");
+  const [status, setStatus] = useState<"idle" | "recording" | "uploading" | "transcribing" | "summarizing" | "ready" | "failed">("idle");
   const [duration, setDuration] = useState(0);
   const [chunksUploaded, setChunksUploaded] = useState(0);
+  const [uploadTotalChunks, setUploadTotalChunks] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const chunkIndexRef = useRef(0);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const statusPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -122,6 +129,59 @@ export function AudioRecorder({ meetingId }: AudioRecorderProps) {
     }
   };
 
+  // Upload file rekaman yang sudah ada (rapat yang sudah lewat): file dipotong
+  // jadi beberapa chunk (limit body Vercel), diunggah berurutan, lalu finalize
+  // menjalankan pipeline AI yang sama dengan rekaman live.
+  const uploadFile = async (file: File) => {
+    setErrorMsg(null);
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setErrorMsg(
+        `File terlalu besar (${(file.size / 1024 / 1024).toFixed(1)}MB). Maksimal 15MB — kompres dulu ke mp3/opus bitrate rendah.`
+      );
+      setStatus("failed");
+      return;
+    }
+
+    const totalChunks = Math.ceil(file.size / UPLOAD_CHUNK_BYTES);
+    setStatus("uploading");
+    setChunksUploaded(0);
+    setUploadTotalChunks(totalChunks);
+
+    try {
+      for (let i = 0; i < totalChunks; i++) {
+        const blob = file.slice(i * UPLOAD_CHUNK_BYTES, (i + 1) * UPLOAD_CHUNK_BYTES);
+        const formData = new FormData();
+        formData.append("chunk", blob);
+        formData.append("index", i.toString());
+
+        const res = await fetch(`/api/meeting/${meetingId}/recording?action=chunk`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Gagal mengunggah bagian ${i + 1}/${totalChunks}.`);
+        }
+        setChunksUploaded(i + 1);
+      }
+
+      const finRes = await fetch(`/api/meeting/${meetingId}/recording?action=finalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totalChunks, mimeType: file.type || "audio/webm" }),
+      });
+      const finData = await finRes.json();
+      if (!finRes.ok) {
+        throw new Error(finData.error || "Gagal memproses rekaman.");
+      }
+      setStatus("transcribing");
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Kesalahan jaringan saat mengunggah rekaman.");
+      setStatus("failed");
+    }
+  };
+
   const stopRecording = async () => {
     if (!mediaRecorderRef.current || status !== "recording") return;
 
@@ -178,7 +238,7 @@ export function AudioRecorder({ meetingId }: AudioRecorderProps) {
             Asisten Notulen AI &amp; Rekaman Rapat
           </h3>
           <p className="text-xs text-slate-500">
-            Rekam suara rapat secara real-time untuk ditranskrip &amp; diringkas AI secara otomatis.
+            Rekam suara rapat secara real-time, atau unggah file rekaman rapat yang sudah lewat — AI otomatis mengisi transkrip, notulen, dan catatan visual.
           </p>
         </div>
         {status === "recording" && (
@@ -188,13 +248,42 @@ export function AudioRecorder({ meetingId }: AudioRecorderProps) {
 
       <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
         {status === "idle" && (
-          <button
-            onClick={startRecording}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.99]"
-          >
-            <Mic className="h-4 w-4" />
-            <span>Mulai Rekam Suara</span>
-          </button>
+          <>
+            <button
+              onClick={startRecording}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.99]"
+            >
+              <Mic className="h-4 w-4" />
+              <span>Mulai Rekam Suara</span>
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all hover:scale-[1.01] active:scale-[0.99]"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Unggah Rekaman</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) uploadFile(file);
+              }}
+            />
+          </>
+        )}
+
+        {status === "uploading" && (
+          <div className="flex items-center gap-3 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 w-full">
+            <Loader2 className="h-4 w-4 animate-spin text-blue-600 shrink-0" />
+            <span>
+              Mengunggah rekaman... ({chunksUploaded}/{uploadTotalChunks} bagian)
+            </span>
+          </div>
         )}
 
         {status === "recording" && (
@@ -220,8 +309,8 @@ export function AudioRecorder({ meetingId }: AudioRecorderProps) {
             <Loader2 className="h-4 w-4 animate-spin text-blue-600 shrink-0" />
             <span>
               {status === "transcribing"
-                ? "Mengonversi rekaman suara menjadi teks (Whisper)..."
-                : "Menganalisis & mengekstrak ringkasan, keputusan, dan tugas (Claude AI)..."}
+                ? "Mengonversi rekaman suara menjadi teks..."
+                : "Menganalisis & mengekstrak ringkasan, keputusan, dan tugas..."}
             </span>
           </div>
         )}
