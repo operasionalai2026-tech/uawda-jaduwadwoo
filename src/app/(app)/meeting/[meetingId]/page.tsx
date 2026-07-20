@@ -7,6 +7,9 @@ import { DecisionForm } from "./DecisionForm";
 import { ActionItemForm } from "./ActionItemForm";
 import { ActionItemStatusSelect } from "./ActionItemStatusSelect";
 import { AudioRecorder } from "./AudioRecorder";
+import { PasteNotesForm } from "./PasteNotesForm";
+import { ShareVisualButton } from "./ShareVisualButton";
+import { getVisualNotesToken } from "@/lib/visual-notes-token";
 import { Sparkles, Calendar, MapPin, Users, CheckSquare, FileText, Lock, Image as ImageIcon, Download } from "lucide-react";
 import Link from "next/link";
 
@@ -156,9 +159,20 @@ export default async function MeetingDetailPage({
         )}
       </div>
 
-      {/* AI Audio Recorder (Only for Leaders & Admins) */}
+      {/* AI Audio Recorder + tempel catatan (Only for Leaders & Admins) */}
       {canEditNotulen && (
-        <AudioRecorder meetingId={meetingId} />
+        <div className="space-y-3">
+          <AudioRecorder meetingId={meetingId} />
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Sudah punya catatan rapat?</h3>
+              <p className="text-xs text-slate-500">
+                Untuk rapat yang sudah lewat: tempel catatan mentahnya, AI menyusun notulen, keputusan, dan action items secara otomatis.
+              </p>
+            </div>
+            <PasteNotesForm meetingId={meetingId} />
+          </div>
+        </div>
       )}
 
       {/* Attendance */}
@@ -228,14 +242,19 @@ export default async function MeetingDetailPage({
               <ImageIcon className="h-4 w-4 text-slate-400" />
               <span>Catatan Visual</span>
             </h2>
-            <a
-              href={`/api/meeting/${meetingId}/visual-notes`}
-              download={`catatan-visual-${meetingId}.png`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Unduh PNG</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <ShareVisualButton
+                sharePath={`/api/meeting/${meetingId}/visual-notes?token=${getVisualNotesToken(meetingId)}`}
+              />
+              <a
+                href={`/api/meeting/${meetingId}/visual-notes`}
+                download={`catatan-visual-${meetingId}.png`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Unduh PNG</span>
+              </a>
+            </div>
           </div>
           <p className="text-xs text-slate-500">
             Poster ringkasan rapat yang dibuat otomatis dari notulen, keputusan, dan action items — siap dibagikan.

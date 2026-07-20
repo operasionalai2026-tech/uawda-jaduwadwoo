@@ -1,18 +1,30 @@
+import { timingSafeEqual } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { getVisualNotesToken } from "@/lib/visual-notes-token";
 import { renderVisualNotesPoster } from "./poster";
 
 // Poster "Catatan Visual" rapat: infografis PNG yang dirender on-the-fly dari
 // notulen, keputusan, dan action items -- selalu mengikuti data terbaru, tidak
-// perlu disimpan ke Storage. Akses memakai client ber-cookie (RLS), jadi rapat
-// privat tetap terlindungi: kalau RLS menyembunyikan rapatnya, respons 404.
+// perlu disimpan ke Storage. Dua jalur akses:
+//   1. Sesi login (RLS) -- rapat privat tetap terlindungi, tanpa akses 404.
+//   2. ?token=... -- link bagikan publik; token deterministik per rapat yang
+//      hanya bisa dihitung server, memberi akses lihat poster tanpa login.
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ meetingId: string }> }
 ) {
   const { meetingId } = await params;
-  const supabase = await createClient();
+
+  const token = new URL(request.url).searchParams.get("token");
+  const expected = getVisualNotesToken(meetingId);
+  const tokenValid =
+    !!token &&
+    token.length === expected.length &&
+    timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+
+  const supabase = tokenValid ? createAdminClient() : await createClient();
 
   // RLS: null kalau rapat privat & user tidak berhak, atau belum login.
   const { data: meeting } = await supabase
