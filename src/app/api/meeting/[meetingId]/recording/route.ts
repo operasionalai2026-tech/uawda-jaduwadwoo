@@ -1,5 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { after, type NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+
+// Pipeline AI berjalan setelah respons finalize dikirim (via after()); beri
+// waktu cukup untuk transkripsi+ringkasan rekaman panjang oleh Gemini.
+export const maxDuration = 120;
 
 // Helper to check/create private bucket "meeting-recordings".
 // Migration 0021 already creates this bucket directly via SQL, so this is
@@ -141,8 +145,10 @@ export async function POST(
           .insert({ meeting_id: meetingId, status: "transcribing", storage_path: finalPath });
       }
 
-      // 2. Launch AI processing in the background (Non-blocking response)
-      runBackgroundPipeline(meetingId, totalChunks, mimeType);
+      // 2. Jalankan pipeline AI setelah respons terkirim. WAJIB lewat after():
+      // panggilan fire-and-forget biasa dibekukan Vercel begitu respons keluar,
+      // membuat status macet di "transcribing" tanpa error sama sekali.
+      after(() => runBackgroundPipeline(meetingId, totalChunks, mimeType));
 
       return NextResponse.json({ success: true, status: "transcribing" });
     } catch (e: any) {
