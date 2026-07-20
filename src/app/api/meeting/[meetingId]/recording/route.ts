@@ -255,8 +255,8 @@ async function runBackgroundPipeline(meetingId: string, totalChunks: number) {
                   }
                 },
                 {
-                  text: `Rapat ini berjudul: "${meetingTitle}" dengan agenda: "${meetingAgenda}".
-                  
+                  text: `Rapat ini berjudul: "${meetingTitle}" dengan agenda: "${meetingAgenda}". Hari ini tanggal ${new Date().toISOString().split("T")[0]}.
+
 Tolong transkripsikan audio rekaman rapat ini secara lengkap ke dalam Bahasa Indonesia, kemudian buat notulensi ringkasnya.
 
 Format keluaran Anda harus berupa JSON valid dengan struktur berikut:
