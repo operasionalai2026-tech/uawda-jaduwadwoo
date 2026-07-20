@@ -1,16 +1,27 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
-// Helper to check/create private bucket "meeting-recordings"
+// Helper to check/create private bucket "meeting-recordings".
+// Migration 0021 already creates this bucket directly via SQL, so this is
+// just a safety net -- but errors here used to be swallowed silently, which
+// made every chunk upload fail with an opaque 500 when the bucket was
+// missing. Surface the failure instead so it's visible in server logs.
 async function ensureBucketExists(supabase: any) {
   const { data: buckets, error } = await supabase.storage.listBuckets();
-  if (error) return;
+  if (error) {
+    throw new Error(`Gagal memeriksa bucket storage: ${error.message}`);
+  }
   const exists = buckets?.some((b: any) => b.id === "meeting-recordings");
   if (!exists) {
-    await supabase.storage.createBucket("meeting-recordings", {
+    // No explicit fileSizeLimit: an explicit 100MB limit here previously
+    // exceeded this Supabase project's global upload limit, which made
+    // createBucket() fail every time (silently, before this fix).
+    const { error: createError } = await supabase.storage.createBucket("meeting-recordings", {
       public: false,
-      fileSizeLimit: 100 * 1024 * 1024, // 100MB
     });
+    if (createError) {
+      throw new Error(`Gagal membuat bucket storage: ${createError.message}`);
+    }
   }
 }
 
@@ -53,7 +64,11 @@ export async function POST(
 ) {
   const { meetingId } = await params;
   const supabase = createAdminClient();
-  await ensureBucketExists(supabase);
+  try {
+    await ensureBucketExists(supabase);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 
   const { searchParams } = new URL(request.url);
   const action = searchParams.get("action");

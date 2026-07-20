@@ -7,7 +7,7 @@ import { DecisionForm } from "./DecisionForm";
 import { ActionItemForm } from "./ActionItemForm";
 import { ActionItemStatusSelect } from "./ActionItemStatusSelect";
 import { AudioRecorder } from "./AudioRecorder";
-import { Sparkles, Calendar, MapPin, Users, CheckSquare, FileText, Lock } from "lucide-react";
+import { Sparkles, Calendar, MapPin, Users, CheckSquare, FileText, Lock, Image as ImageIcon, Download } from "lucide-react";
 import Link from "next/link";
 
 export default async function MeetingDetailPage({
@@ -219,6 +219,35 @@ export default async function MeetingDetailPage({
           </div>
         )}
       </section>
+
+      {/* Catatan Visual (infografis ringkasan rapat) */}
+      {(notulenRow?.content || (decisions ?? []).length > 0 || (actionItems ?? []).length > 0) && (
+        <section className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-slate-400" />
+              <span>Catatan Visual</span>
+            </h2>
+            <a
+              href={`/api/meeting/${meetingId}/visual-notes`}
+              download={`catatan-visual-${meetingId}.png`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Unduh PNG</span>
+            </a>
+          </div>
+          <p className="text-xs text-slate-500">
+            Poster ringkasan rapat yang dibuat otomatis dari notulen, keputusan, dan action items — siap dibagikan.
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element -- gambar dinamis dari route sendiri, tidak perlu optimasi next/image */}
+          <img
+            src={`/api/meeting/${meetingId}/visual-notes`}
+            alt={`Catatan visual rapat ${meeting.title}`}
+            className="w-full rounded-xl border border-slate-100 shadow-sm"
+          />
+        </section>
+      )}
 
       {/* Decisions */}
       <section className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm space-y-3">
